@@ -8,16 +8,13 @@ export function Accordion({
   children: React.ReactNode;
 }) {
   return (
-    <details
-      open={defaultOpen || undefined}
-      className="group rounded-2xl border border-line bg-paper open:bg-cream/40"
-    >
-      <summary className="flex items-center justify-between gap-3 px-5 py-4 font-display text-lg font-semibold text-ink">
+    <details open={defaultOpen || undefined} className="group border-t border-line-strong">
+      <summary className="flex items-center justify-between gap-3 py-4 text-sm font-bold tracking-wide text-ink-soft uppercase">
         {title}
         <svg
           viewBox="0 0 20 20"
           fill="currentColor"
-          className="h-5 w-5 shrink-0 text-ink-muted transition-transform group-open:rotate-180"
+          className="h-4 w-4 shrink-0 text-ink-soft transition-transform group-open:rotate-180"
         >
           <path
             fillRule="evenodd"
@@ -26,7 +23,7 @@ export function Accordion({
           />
         </svg>
       </summary>
-      <div className="space-y-4 px-5 pb-6 text-ink-muted">{children}</div>
+      <div className="space-y-4 pb-6 text-sm text-ink-muted">{children}</div>
     </details>
   );
 }

@@ -11,7 +11,7 @@ import { StepShell } from "@/components/finder/StepShell";
 import { OptionGrid } from "@/components/finder/OptionGrid";
 import { RecommendationCard } from "@/components/finder/RecommendationCard";
 import { SafetyNotice } from "@/components/SafetyNotice";
-import { GenerationSelectCard } from "@/components/visuals/GenerationCard";
+import { GenerationOption } from "@/components/finder/GenerationOption";
 import { USE_CASE_ICONS, PREFERENCE_ICONS } from "@/components/finder/iconMaps";
 
 type Step = "generation" | "year" | "use-case" | "preference" | "results";
@@ -77,15 +77,14 @@ export function FinderWizard({
     : [];
 
   return (
-    <div className="rounded-3xl border border-line bg-cream/50 p-6 sm:p-8">
+    <div className="border border-line bg-paper p-6 sm:p-8">
       {step === "generation" && (
         <StepShell step={stepNumber} totalSteps={totalSteps} title="Choose your 4Runner" subtitle="Which generation is yours?">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="flex flex-col gap-3 sm:flex-row">
             {generations.map((g) => (
-              <GenerationSelectCard
+              <GenerationOption
                 key={g.id}
                 generation={g}
-                ctaLabel="Choose this generation"
                 onSelect={() => {
                   setGeneration(g);
                   setStep("year");
@@ -192,7 +191,7 @@ export function FinderWizard({
             <SafetyNotice />
 
             {result.note && (
-              <p className="rounded-xl border border-line bg-paper p-4 text-sm text-ink-muted">
+              <p className="border border-line bg-paper p-4 text-sm text-ink-muted">
                 {result.note}
               </p>
             )}
@@ -204,7 +203,6 @@ export function FinderWizard({
                 variant={index === 0 ? "primary" : "secondary"}
                 rank={index}
                 preference={preference}
-                useCase={useCase}
               />
             ))}
 

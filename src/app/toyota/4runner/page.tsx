@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { FinderWizard } from "@/components/finder/FinderWizard";
 import { getGenerationsForVehicle, getYearsForVehicle } from "@/lib/data/generations";
-import { getVerifiedProductsForGeneration } from "@/lib/generationProducts";
-import { GenerationLinkCard } from "@/components/visuals/GenerationCard";
-import { OverlandScene } from "@/components/visuals/OverlandScene";
+import { getVerifiedProductsForGeneration, compareFullLengthOptions } from "@/lib/generationProducts";
+import { GenerationFeature } from "@/components/GenerationFeature";
 import { RecommendationCard } from "@/components/finder/RecommendationCard";
+import { FinderStageMedia } from "@/components/media/FinderStageMedia";
+import { RevealOnScroll } from "@/components/media/RevealOnScroll";
 import { Accordion } from "@/components/Accordion";
 import { SafetyNotice } from "@/components/SafetyNotice";
 
@@ -58,52 +59,42 @@ export default function ToyotaFourRunnerPage() {
 
   return (
     <div>
-      {/* HERO */}
-      <section className="bg-paper">
-        <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-4 py-14 sm:px-6 lg:grid-cols-2 lg:py-20">
-          <div>
-            <span className="text-xs font-bold tracking-widest text-clay uppercase">
-              Toyota 4Runner
-            </span>
-            <h1 className="mt-2 font-display text-4xl leading-tight font-semibold text-ink sm:text-5xl">
-              Roof Rack Fit Finder
-            </h1>
-            <p className="mt-4 max-w-md text-lg text-ink-muted">
-              Covers 2010–2026 (5th &amp; 6th Gen). Answer three quick questions to see
-              manufacturer-verified rack options for your 4Runner.
-            </p>
-            <a
-              href="#finder"
-              className="mt-6 inline-flex items-center justify-center rounded-full bg-clay px-6 py-3 text-base font-semibold text-paper transition-colors hover:bg-clay-dark"
-            >
-              Start the finder
-            </a>
-          </div>
-          <div className="overflow-hidden rounded-3xl border border-line bg-cream shadow-sm">
-            <OverlandScene topper="cargo" className="h-full w-full" />
-          </div>
+      {/* VISUAL HERO */}
+      <section className="relative h-[64vh] min-h-[440px] w-full overflow-hidden">
+        <FinderStageMedia
+          alt="Toyota 4Runner with roof rack overlooking a mountain valley"
+          className="h-full w-full"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-ink/60 via-ink/10 to-transparent" />
+        <div className="relative flex h-full flex-col justify-end px-4 pb-14 sm:px-6 lg:px-16">
+          <span className="text-xs font-bold tracking-[0.2em] text-clay uppercase">
+            Toyota 4Runner
+          </span>
+          <h1 className="mt-2 font-display text-4xl font-semibold text-paper sm:text-5xl">
+            Roof Rack Fit Finder
+          </h1>
+          <p className="mt-3 max-w-md text-lg text-paper/90">
+            Covers 2010–2026 (5th &amp; 6th Gen). Manufacturer-verified fitment only.
+          </p>
+          <a
+            href="#finder"
+            className="mt-6 inline-flex w-fit items-center justify-center rounded-full bg-clay px-6 py-3 text-base font-semibold text-paper transition-colors hover:bg-clay-dark"
+          >
+            Start the finder
+          </a>
         </div>
       </section>
 
-      {/* GENERATION CARDS */}
-      <section className="border-y border-line bg-cream">
-        <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-            {generations.map((g) => (
-              <GenerationLinkCard
-                key={g.id}
-                generation={g}
-                href={`/toyota/4runner/${g.yearEnd}`}
-                topper={g.id === "4runner-6th-gen" ? "cargo" : "tent"}
-              />
-            ))}
-          </div>
-        </div>
+      {/* GENERATION NAVIGATION */}
+      <section>
+        {generations.map((g) => (
+          <GenerationFeature key={g.id} generation={g} href={`/toyota/4runner/${g.yearEnd}`} />
+        ))}
       </section>
 
       {/* FINDER */}
-      <section id="finder" className="bg-paper scroll-mt-20">
-        <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
+      <section id="finder" className="scroll-mt-20 bg-paper">
+        <div className="mx-auto max-w-3xl px-4 py-20 sm:px-6">
           <div className="mb-8 text-center">
             <h2 className="font-display text-3xl font-semibold text-ink">Let&apos;s find your rack</h2>
             <p className="mt-2 text-ink-muted">Three quick questions, real manufacturer-verified results.</p>
@@ -112,26 +103,49 @@ export default function ToyotaFourRunnerPage() {
         </div>
       </section>
 
-      {/* VERIFIED PRODUCTS PREVIEW */}
-      <section className="border-y border-line bg-cream">
-        <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
-          <h2 className="font-display text-3xl font-semibold text-ink">Verified compatible products</h2>
-          <p className="mt-2 text-ink-muted">
-            Every product below has a manufacturer-published fitment statement — grouped by
-            generation.
-          </p>
-          {generations.map((g) => (
-            <div key={g.id} className="mt-10">
-              <h3 className="font-display text-xl font-semibold text-ink">
-                {g.name} ({g.yearStart}–{g.yearEnd})
-              </h3>
-              <div className="mt-4 flex flex-col gap-4">
-                {getVerifiedProductsForGeneration(g).map((rec) => (
-                  <RecommendationCard key={rec.product.id} recommendation={rec} />
-                ))}
+      {/* VERIFIED RACK OPTIONS + COMPARISON */}
+      <section className="border-t border-line bg-cream">
+        <div className="mx-auto max-w-4xl px-4 py-20 sm:px-6">
+          <RevealOnScroll>
+            <h2 className="font-display text-3xl font-semibold text-ink">Verified rack options</h2>
+            <p className="mt-2 text-ink-muted">
+              Every product below has a manufacturer-published fitment statement — grouped by
+              generation.
+            </p>
+          </RevealOnScroll>
+          {generations.map((g) => {
+            const comparison = compareFullLengthOptions(g);
+            return (
+              <div key={g.id} className="mt-12">
+                <h3 className="font-display text-xl font-semibold text-ink">
+                  {g.name} ({g.yearStart}–{g.yearEnd})
+                </h3>
+                <div className="mt-4 flex flex-col gap-4">
+                  {getVerifiedProductsForGeneration(g).map((rec) => (
+                    <RecommendationCard key={rec.product.id} recommendation={rec} />
+                  ))}
+                </div>
+                {comparison && (
+                  <div className="mt-6 border border-line-strong bg-paper p-6">
+                    <h4 className="font-display text-lg font-semibold text-ink">
+                      {comparison.cheaper.product.name} vs. {comparison.higherCapacity.product.name}
+                    </h4>
+                    <p className="mt-2 text-sm text-ink-muted">
+                      The {comparison.higherCapacity.product.name} carries {comparison.capacityDelta} lb
+                      more manufacturer-stated static capacity than the {comparison.cheaper.product.name},
+                      for{" "}
+                      {comparison.priceDelta.toLocaleString("en-US", {
+                        style: "currency",
+                        currency: "USD",
+                        maximumFractionDigits: 0,
+                      })}{" "}
+                      more at reference price.
+                    </p>
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 
@@ -149,7 +163,7 @@ export default function ToyotaFourRunnerPage() {
                 <Link
                   key={year}
                   href={`/toyota/4runner/${year}`}
-                  className="rounded-full border border-line bg-paper px-3 py-1 text-sm text-ink-muted transition-colors hover:border-clay hover:text-clay"
+                  className="rounded-full border border-line px-3 py-1 text-sm text-ink-muted transition-colors hover:border-clay hover:text-clay"
                 >
                   {year}
                 </Link>
@@ -159,8 +173,8 @@ export default function ToyotaFourRunnerPage() {
       </section>
 
       {/* FAQ */}
-      <section id="faq" className="border-t border-line bg-cream scroll-mt-20">
-        <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
+      <section id="faq" className="scroll-mt-20 border-t border-line bg-cream">
+        <div className="mx-auto max-w-3xl px-4 py-20 sm:px-6">
           <h2 className="font-display text-3xl font-semibold text-ink">FAQ</h2>
           <dl className="mt-6 space-y-6">
             {faqs.map((faq) => (
@@ -173,9 +187,9 @@ export default function ToyotaFourRunnerPage() {
         </div>
       </section>
 
-      {/* SAFETY / METHODOLOGY / DISCLOSURE — compact, at the bottom */}
+      {/* SAFETY / METHODOLOGY / DISCLOSURE — de-emphasized, at the bottom */}
       <section className="bg-paper">
-        <div className="mx-auto flex max-w-3xl flex-col gap-4 px-4 py-16 sm:px-6">
+        <div className="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-16 sm:px-6">
           <SafetyNotice />
 
           <div id="methodology" className="scroll-mt-20">

@@ -27,12 +27,12 @@ export function StepShell({
         ) : (
           <span />
         )}
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1">
           {Array.from({ length: totalSteps }).map((_, i) => (
             <span
               key={i}
-              className={`h-1.5 rounded-full transition-all ${
-                i + 1 === step ? "w-6 bg-clay" : i + 1 < step ? "w-1.5 bg-olive" : "w-1.5 bg-line"
+              className={`h-[2px] transition-all ${
+                i + 1 === step ? "w-8 bg-clay" : i + 1 < step ? "w-4 bg-olive" : "w-4 bg-line"
               }`}
             />
           ))}

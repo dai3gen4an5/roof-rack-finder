@@ -15,7 +15,7 @@ export function OptionGrid({
   onSelect: (id: string) => void;
 }) {
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+    <div className="grid grid-cols-1 gap-px bg-line sm:grid-cols-2">
       {items.map((item) => {
         const Icon = item.icon;
         return (
@@ -23,13 +23,9 @@ export function OptionGrid({
             key={item.id}
             type="button"
             onClick={() => onSelect(item.id)}
-            className="group flex items-start gap-3.5 rounded-2xl border border-line bg-paper p-4 text-left transition-all hover:-translate-y-0.5 hover:border-clay hover:shadow-md"
+            className="flex items-start gap-3.5 border border-line bg-paper p-4 text-left transition-colors hover:border-clay hover:bg-cream focus-visible:border-clay focus-visible:bg-cream focus-visible:outline-none"
           >
-            {Icon && (
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-cream text-ink transition-colors group-hover:bg-clay group-hover:text-paper">
-                <Icon className="h-5.5 w-5.5" />
-              </span>
-            )}
+            {Icon && <Icon className="mt-0.5 h-5 w-5 shrink-0 text-ink-muted" />}
             <span className="flex flex-col gap-0.5">
               <span className="font-display text-base font-semibold text-ink">{item.label}</span>
               {item.description && (

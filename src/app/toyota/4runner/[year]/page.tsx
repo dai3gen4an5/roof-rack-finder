@@ -6,7 +6,7 @@ import { getVerifiedProductsForGeneration, compareFullLengthOptions } from "@/li
 import { FinderWizard } from "@/components/finder/FinderWizard";
 import { RecommendationCard } from "@/components/finder/RecommendationCard";
 import { SafetyNotice } from "@/components/SafetyNotice";
-import { OverlandScene } from "@/components/visuals/OverlandScene";
+import { VehicleGenerationMedia } from "@/components/media/VehicleGenerationMedia";
 import { Accordion } from "@/components/Accordion";
 
 const VEHICLE_ID = "toyota-4runner";
@@ -22,7 +22,6 @@ export const dynamicParams = false;
 
 interface GenerationCopy {
   intro: string;
-  topper: "tent" | "cargo" | "bike";
   faqs: { question: string; answer: string }[];
 }
 
@@ -30,7 +29,6 @@ const GENERATION_COPY: Record<string, GenerationCopy> = {
   "4runner-5th-gen": {
     intro:
       "Three manufacturer-verified Prinsu rack fitments exist for this generation: two full-length racks (Original and Pro) and one 3/4-length rack, all installing through factory mounting points with no drilling.",
-    topper: "tent",
     faqs: [
       {
         question: "What's different between the Original and Pro racks for the 5th Gen 4Runner?",
@@ -47,7 +45,6 @@ const GENERATION_COPY: Record<string, GenerationCopy> = {
   "4runner-6th-gen": {
     intro:
       "Two manufacturer-verified Prinsu full-length rack fitments exist so far (Original and Pro), both bolt-on/non-drill. No 3/4-length rack has been published for this generation yet.",
-    topper: "cargo",
     faqs: [
       {
         question: "Why isn't there a 3/4-length rack for this generation yet?",
@@ -93,26 +90,28 @@ export default async function YearPage({ params }: { params: Promise<{ year: str
   return (
     <div>
       {/* HERO */}
-      <section className="bg-paper">
-        <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-4 py-14 sm:px-6 lg:grid-cols-2 lg:py-20">
-          <div>
-            <span className="text-xs font-bold tracking-widest text-clay uppercase">
-              {generation.name} · {generation.yearStart}–{generation.yearEnd}
-            </span>
-            <h1 className="mt-2 font-display text-4xl leading-tight font-semibold text-ink sm:text-5xl">
-              Best Roof Racks for the {year} Toyota 4Runner
-            </h1>
-            <p className="mt-4 max-w-md text-lg text-ink-muted">{copy.intro}</p>
-            <a
-              href="#finder"
-              className="mt-6 inline-flex items-center justify-center rounded-full bg-clay px-6 py-3 text-base font-semibold text-paper transition-colors hover:bg-clay-dark"
-            >
-              Run the finder for {year}
-            </a>
-          </div>
-          <div className="overflow-hidden rounded-3xl border border-line bg-cream shadow-sm">
-            <OverlandScene topper={copy.topper} className="h-full w-full" />
-          </div>
+      <section className="relative h-[64vh] min-h-[440px] w-full overflow-hidden">
+        <VehicleGenerationMedia
+          generationId={generation.id as "4runner-5th-gen" | "4runner-6th-gen"}
+          alt={`${generation.name} Toyota 4Runner with roof rack`}
+          className="h-full w-full"
+          priority
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-ink/65 via-ink/15 to-transparent" />
+        <div className="relative flex h-full flex-col justify-end px-4 pb-14 sm:px-6 lg:px-16">
+          <span className="text-xs font-bold tracking-[0.2em] text-clay uppercase">
+            {generation.name} · {generation.yearStart}–{generation.yearEnd}
+          </span>
+          <h1 className="mt-2 font-display text-4xl font-semibold text-paper sm:text-5xl">
+            Best Roof Racks for the {year} Toyota 4Runner
+          </h1>
+          <p className="mt-3 max-w-md text-lg text-paper/90">{copy.intro}</p>
+          <a
+            href="#finder"
+            className="mt-6 inline-flex w-fit items-center justify-center rounded-full bg-clay px-6 py-3 text-base font-semibold text-paper transition-colors hover:bg-clay-dark"
+          >
+            Run the finder for {year}
+          </a>
         </div>
       </section>
 
@@ -136,7 +135,7 @@ export default async function YearPage({ params }: { params: Promise<{ year: str
       {comparison && (
         <section className="bg-paper">
           <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
-            <div className="rounded-3xl border border-line bg-cream/60 p-8">
+            <div className="border border-line-strong bg-cream/60 p-8">
               <h2 className="font-display text-2xl font-semibold text-ink">
                 {comparison.cheaper.product.name} vs. {comparison.higherCapacity.product.name}
               </h2>
