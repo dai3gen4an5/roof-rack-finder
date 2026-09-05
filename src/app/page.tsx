@@ -21,9 +21,12 @@ export default function Home() {
     <div>
       {/* HERO */}
       <section className="relative h-[92vh] min-h-[640px] w-full overflow-hidden">
-        <HeroMedia alt="Toyota 4Runner with a loaded roof rack overlooking a mountain lake at sunset" />
-        <div className="absolute inset-0 bg-gradient-to-t from-ink/50 via-transparent to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-r from-paper/25 via-transparent to-transparent" />
+        <HeroMedia alt="Toyota 4Runner with a loaded roof rack overlooking a mountain valley at sunset" />
+        {/* Light wash behind the copy so dark headline text stays legible over
+            the photo without flattening it into a solid overlay. */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(251,247,240,0.62)_0%,rgba(251,247,240,0.4)_45%,rgba(251,247,240,0.14)_65%,transparent_85%)]" />
+        {/* Narrow dark fade confined to the very bottom, behind the trust strip only. */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(43,38,32,0.35)_0%,transparent_30%)]" />
 
         <div className="relative flex h-full flex-col justify-end px-4 pb-24 sm:px-6 lg:px-16 lg:pb-28">
           <div className="max-w-xl">

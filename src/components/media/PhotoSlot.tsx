@@ -22,7 +22,7 @@ export function PhotoSlot({
   quality = 82,
   className,
   imgClassName,
-  objectPosition,
+  objectPositionClassName = "object-center",
 }: {
   assetKey: PhotoAssetKey;
   alt: string;
@@ -33,7 +33,11 @@ export function PhotoSlot({
   className?: string;
   /** Classes for the <img> itself (rarely needed beyond object-position). */
   imgClassName?: string;
-  objectPosition?: string;
+  /** Tailwind object-position utility classes (can include responsive
+   * variants, e.g. "object-[78%_50%] sm:object-[65%_50%] lg:object-center")
+   * so a subject that sits off-center in the source photo doesn't crop out
+   * of frame on narrow viewports. */
+  objectPositionClassName?: string;
 }) {
   const src = PHOTO_ASSETS[assetKey];
 
@@ -47,8 +51,8 @@ export function PhotoSlot({
           priority={priority}
           sizes={sizes}
           quality={quality}
-          style={{ objectFit: "cover", objectPosition: objectPosition ?? "center" }}
-          className={imgClassName}
+          style={{ objectFit: "cover" }}
+          className={`${objectPositionClassName} ${imgClassName ?? ""}`}
         />
       ) : null}
     </div>

@@ -16,14 +16,12 @@ export type PhotoAssetKey =
  * one-line change here — no component or layout code should need to change.
  */
 export const PHOTO_ASSETS: Record<PhotoAssetKey, string | null> = {
-  // `design-reference/rackfit-hero-reference.png` is a full design *comp*
-  // (nav, headline, CTAs, and trust strip already rendered into the pixels
-  // as a direction reference) — not a clean background photo. Using it here
-  // would double every piece of overlay text under the real HTML. Leave
-  // this null (falls back to the flat placeholder) until a clean,
-  // text-free hero photo is provided; see the Home Hero row in the image
-  // asset spec for what's needed.
-  "home-hero": null,
+  // NOTE: `design-reference/rackfit-hero-reference.png` is a full design
+  // *comp* (nav, headline, CTAs, and trust strip baked into the pixels as a
+  // direction reference) — never wire that specific file in here, it would
+  // double every overlay text element under the real HTML. This asset
+  // (`clean Home Hero.png`) is a genuinely clean, text-free photo.
+  "home-hero": "/photography/home-hero.png",
   "generation-5th": "/photography/generation-5th.png",
   "generation-6th": "/photography/generation-6th.png",
   "finder-stage": "/photography/finder-stage.png",
