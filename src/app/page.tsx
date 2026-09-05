@@ -20,28 +20,29 @@ export default function Home() {
   return (
     <div>
       {/* HERO */}
-      <section className="relative h-[100svh] min-h-[720px] w-full overflow-hidden sm:h-[92vh] sm:min-h-[640px]">
+      <section className="relative h-[100svh] min-h-[680px] w-full overflow-hidden sm:h-[82vh] sm:min-h-[600px]">
         <HeroMedia alt="Toyota 4Runner with a loaded roof rack overlooking a mountain valley at sunset" />
-        {/* Light wash behind the copy so dark headline text stays legible over
-            the photo without flattening it into a solid overlay. */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(251,247,240,0.62)_0%,rgba(251,247,240,0.4)_45%,rgba(251,247,240,0.14)_65%,transparent_85%)]" />
-        {/* Narrow dark fade confined to the very bottom, behind the trust strip only. */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(43,38,32,0.35)_0%,transparent_30%)]" />
-        {/* Mobile-only: extra bottom-weighted darkening so body copy and CTAs
-            stay legible without flattening the whole photo (desktop untouched). */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(43,38,32,0)_0%,rgba(43,38,32,0.18)_45%,rgba(43,38,32,0.42)_75%,rgba(43,38,32,0.5)_100%)] sm:hidden" />
+        {/* Dark scrim, strongest lower-left where the copy sits, fading away
+            toward the vehicle/sky — a gradient, not a flat rectangle. */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(43,38,32,0.68)_0%,rgba(43,38,32,0.42)_42%,rgba(43,38,32,0.16)_65%,transparent_85%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(43,38,32,0.5)_0%,rgba(43,38,32,0.08)_38%,transparent_60%)]" />
+        {/* Mobile-only: stronger asymmetric bottom-left weighting so body copy
+            and CTAs stay legible without flattening the whole photo (desktop
+            keeps the lighter gradients above only). */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(43,38,32,0)_0%,rgba(43,38,32,0.28)_40%,rgba(43,38,32,0.6)_75%,rgba(43,38,32,0.7)_100%)] sm:hidden" />
 
-        <div className="relative flex h-full flex-col justify-end px-4 pb-44 sm:px-6 sm:pb-24 lg:px-16 lg:pb-28">
+        <div className="relative flex h-full flex-col justify-end px-4 pb-44 sm:px-6 sm:pb-16 lg:px-16 lg:pb-20">
           <div className="max-w-xl">
             <span className="text-xs font-bold tracking-[0.2em] text-clay uppercase">
               Built for 4Runner owners
             </span>
-            <h1 className="font-display mt-2 text-4xl leading-[1.1] font-bold text-ink sm:mt-3 sm:text-6xl sm:leading-[1.05] lg:text-7xl">
-              <span className="block">Find the roof rack</span>
+            <h1 className="font-hero mt-2 text-4xl leading-[1.1] font-bold text-paper sm:mt-3 sm:text-6xl sm:leading-[1.05] lg:text-7xl">
+              <span className="block">Find the</span>
+              <span className="block text-clay uppercase whitespace-nowrap">Roof Rack</span>
               <span className="block">that actually fits</span>
               <span className="block">your 4Runner.</span>
             </h1>
-            <p className="mt-4 max-w-md text-base text-ink-muted sm:mt-5 sm:text-lg">
+            <p className="mt-4 max-w-md text-base text-paper/85 sm:mt-5 sm:text-lg">
               Choose your year, what you carry, and how you use your rig. RackFit compares
               manufacturer-verified options — no guessed compatibility.
             </p>
@@ -54,7 +55,7 @@ export default function Home() {
               </a>
               <a
                 href="#how-it-works"
-                className="inline-flex items-center justify-center rounded-full border border-ink px-6 py-3 text-base font-semibold text-ink transition-colors hover:bg-ink hover:text-paper"
+                className="inline-flex items-center justify-center rounded-full border border-paper px-6 py-3 text-base font-semibold text-paper transition-colors hover:bg-paper hover:text-ink"
               >
                 See how it works
               </a>
@@ -92,7 +93,7 @@ export default function Home() {
       <section id="how-it-works" className="scroll-mt-20 bg-paper">
         <div className="mx-auto max-w-3xl px-4 py-20 sm:px-6">
           <RevealOnScroll>
-            <h2 className="font-display text-3xl font-semibold text-ink">How RackFit works</h2>
+            <h2 className="font-hero text-3xl font-semibold text-ink">How RackFit works</h2>
           </RevealOnScroll>
           <div className="mt-10 divide-y divide-line">
             {[
@@ -127,7 +128,7 @@ export default function Home() {
       <section className="border-t border-line bg-paper">
         <div className="mx-auto max-w-5xl px-4 py-20 sm:px-6">
           <RevealOnScroll>
-            <h2 className="font-display text-3xl font-semibold text-ink">Featured racks</h2>
+            <h2 className="font-hero text-3xl font-semibold text-ink">Featured racks</h2>
             <p className="mt-2 text-ink-muted">
               Not ready to run the finder? Here are two real, verified options for the current
               6th Gen 4Runner.
@@ -143,7 +144,7 @@ export default function Home() {
       <section className="border-t border-line bg-cream">
         <div className="mx-auto max-w-5xl px-4 py-20 sm:px-6">
           <RevealOnScroll>
-            <h2 className="font-display text-3xl font-semibold text-ink">Why RackFit</h2>
+            <h2 className="font-hero text-3xl font-semibold text-ink">Why RackFit</h2>
           </RevealOnScroll>
           <div className="mt-10 grid grid-cols-1 gap-10 sm:grid-cols-3">
             {[

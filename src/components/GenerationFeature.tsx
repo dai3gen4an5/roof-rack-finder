@@ -20,7 +20,7 @@ export function GenerationFeature({ generation, href }: { generation: Generation
           />
           <div className="absolute inset-0 bg-gradient-to-t from-ink/70 via-ink/10 to-transparent" />
           <div className="absolute inset-x-0 bottom-0 p-6 sm:p-10 lg:p-14">
-            <p className="font-display text-6xl leading-none font-bold text-paper sm:text-8xl">
+            <p className="font-hero text-6xl leading-none font-bold text-paper sm:text-8xl">
               {generation.yearStart}–{generation.yearEnd}
             </p>
             <div className="mt-3 flex flex-wrap items-end justify-between gap-4">

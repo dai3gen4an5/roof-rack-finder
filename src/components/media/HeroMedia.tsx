@@ -64,7 +64,7 @@ export function HeroMedia({ alt }: { alt: string }) {
         sizes="100vw"
         quality={85}
         className="h-full w-full"
-        objectPositionClassName="object-[90%_60%] sm:object-[72%_50%] lg:object-center"
+        objectPositionClassName="object-[90%_62%] sm:object-[72%_58%] lg:object-[60%_62%]"
       />
     </div>
   );
