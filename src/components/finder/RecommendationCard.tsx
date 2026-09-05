@@ -2,6 +2,7 @@ import { INSTALLATION_TYPE_LABELS } from "@/lib/types";
 import type { PreferenceId, PriceRange, Recommendation } from "@/lib/types";
 import { RankBadge, VerifiedFitBadge } from "@/components/finder/Badge";
 import { ProductMedia } from "@/components/media/ProductMedia";
+import { getProductPhotoAssetKey, hasPhotoAsset } from "@/lib/media";
 import { rankBadgeForPreference } from "@/lib/recommend";
 
 function formatPrice(price: PriceRange): string {
@@ -33,13 +34,21 @@ export function RecommendationCard({
   const ctaUrl = product.affiliateUrl ?? product.outboundUrl;
   const isPrimary = variant === "primary";
   const rankBadge = rank === 0 && preference ? rankBadgeForPreference(preference) : null;
+  // No product photography exists yet (pending manufacturer licensing) — an
+  // empty aspect-ratio panel reads as a broken image, not "coming soon", so
+  // the whole media column is omitted rather than reserved. The day a real
+  // asset is wired into src/lib/media.ts, this brings the column back
+  // automatically on every card, no layout change needed.
+  const hasMedia = hasPhotoAsset(getProductPhotoAssetKey(product.name));
 
   return (
     <article className={`flex flex-col border bg-paper sm:flex-row ${isPrimary ? "border-ink" : "border-line"}`}>
-      <ProductMedia
-        productName={product.name}
-        className={`shrink-0 ${isPrimary ? "aspect-square sm:w-72" : "aspect-square sm:w-48"}`}
-      />
+      {hasMedia && (
+        <ProductMedia
+          productName={product.name}
+          className={`shrink-0 ${isPrimary ? "aspect-square sm:w-72" : "aspect-square sm:w-48"}`}
+        />
+      )}
 
       <div className="flex flex-1 flex-col gap-4 p-5 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">

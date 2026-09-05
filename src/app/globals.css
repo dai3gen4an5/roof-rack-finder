@@ -42,12 +42,21 @@
   --color-forest-dark: var(--color-forest-dark);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --font-display: var(--font-display);
+  /* Modern automotive/technical direction, not editorial serif: headings
+     share the same neutral grotesk as body text, no added font dependency.
+     Personality comes from scale/weight/tracking, not a second typeface. */
+  --font-display: var(--font-geist-sans);
 }
 
 body {
   background: var(--color-paper);
   color: var(--color-ink);
+}
+
+/* Tight tracking on headline-scale text, applied once here rather than
+   repeated at every `font-display` call site. */
+.font-display {
+  letter-spacing: -0.02em;
 }
 
 details > summary {

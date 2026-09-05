@@ -38,3 +38,14 @@ export const PHOTO_ASSETS: Record<PhotoAssetKey, string | null> = {
 export function getProductPhotoAssetKey(productName: string): PhotoAssetKey {
   return productName.toLowerCase().includes("pro") ? "product-prinsu-pro" : "product-prinsu-original";
 }
+
+/**
+ * Whether a real photo backs this slot. Callers that lay out a dedicated
+ * media column (e.g. a product comparison card) should check this and drop
+ * the column entirely when false, rather than reserving space for a photo
+ * that isn't coming — an empty aspect-ratio panel reads as a broken image,
+ * not as "photo pending."
+ */
+export function hasPhotoAsset(key: PhotoAssetKey): boolean {
+  return PHOTO_ASSETS[key] != null;
+}

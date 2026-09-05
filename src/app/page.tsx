@@ -20,29 +20,32 @@ export default function Home() {
   return (
     <div>
       {/* HERO */}
-      <section className="relative h-[92vh] min-h-[640px] w-full overflow-hidden">
+      <section className="relative h-[100svh] min-h-[720px] w-full overflow-hidden sm:h-[92vh] sm:min-h-[640px]">
         <HeroMedia alt="Toyota 4Runner with a loaded roof rack overlooking a mountain valley at sunset" />
         {/* Light wash behind the copy so dark headline text stays legible over
             the photo without flattening it into a solid overlay. */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(251,247,240,0.62)_0%,rgba(251,247,240,0.4)_45%,rgba(251,247,240,0.14)_65%,transparent_85%)]" />
         {/* Narrow dark fade confined to the very bottom, behind the trust strip only. */}
         <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(43,38,32,0.35)_0%,transparent_30%)]" />
+        {/* Mobile-only: extra bottom-weighted darkening so body copy and CTAs
+            stay legible without flattening the whole photo (desktop untouched). */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(43,38,32,0)_0%,rgba(43,38,32,0.18)_45%,rgba(43,38,32,0.42)_75%,rgba(43,38,32,0.5)_100%)] sm:hidden" />
 
-        <div className="relative flex h-full flex-col justify-end px-4 pb-24 sm:px-6 lg:px-16 lg:pb-28">
+        <div className="relative flex h-full flex-col justify-end px-4 pb-44 sm:px-6 sm:pb-24 lg:px-16 lg:pb-28">
           <div className="max-w-xl">
             <span className="text-xs font-bold tracking-[0.2em] text-clay uppercase">
               Built for 4Runner owners
             </span>
-            <h1 className="mt-3 font-display text-5xl leading-[1.05] font-bold text-ink sm:text-6xl lg:text-7xl">
+            <h1 className="font-display mt-2 text-4xl leading-[1.1] font-bold text-ink sm:mt-3 sm:text-6xl sm:leading-[1.05] lg:text-7xl">
               <span className="block">Find the roof rack</span>
               <span className="block">that actually fits</span>
               <span className="block">your 4Runner.</span>
             </h1>
-            <p className="mt-5 max-w-md text-lg text-ink-muted">
+            <p className="mt-4 max-w-md text-base text-ink-muted sm:mt-5 sm:text-lg">
               Choose your year, what you carry, and how you use your rig. RackFit compares
               manufacturer-verified options — no guessed compatibility.
             </p>
-            <div className="mt-7 flex flex-wrap gap-3">
+            <div className="mt-5 flex flex-wrap gap-3 sm:mt-7">
               <a
                 href="#finder"
                 className="inline-flex items-center justify-center rounded-full bg-clay px-6 py-3 text-base font-semibold text-paper transition-colors hover:bg-clay-dark"
@@ -60,14 +63,14 @@ export default function Home() {
         </div>
 
         {/* Trust signals, overlaid directly on the photo — not a separate card */}
-        <div className="absolute inset-x-0 bottom-0 border-t border-paper/20 bg-ink/35 backdrop-blur-[2px]">
+        <div className="absolute inset-x-0 bottom-0 border-t border-paper/20 bg-ink/45 backdrop-blur-[2px] sm:bg-ink/35">
           <div className="mx-auto grid max-w-6xl grid-cols-1 divide-y divide-paper/20 px-4 sm:grid-cols-3 sm:divide-x sm:divide-y-0 sm:px-6">
             {[
               { icon: ShieldCheckIcon, label: "Manufacturer-published fitment" },
               { icon: NoAiIcon, label: "No AI-inferred compatibility" },
               { icon: CompassIcon, label: "Verified sources" },
             ].map((item) => (
-              <div key={item.label} className="flex items-center gap-2.5 py-3 sm:justify-center sm:py-4">
+              <div key={item.label} className="flex items-center gap-2.5 py-2.5 sm:justify-center sm:py-4">
                 <item.icon className="h-4 w-4 shrink-0 text-paper" />
                 <span className="text-xs font-semibold tracking-wide text-paper uppercase">
                   {item.label}
