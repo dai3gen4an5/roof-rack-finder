@@ -212,6 +212,28 @@ export function buildReasons(
   return reasons.slice(0, 3);
 }
 
+/**
+ * Which rank-badge (if any) a top-ranked ("rank 0") card should carry, purely
+ * a function of which preference produced the ranking — genuine, derived
+ * from the same rule that did the sorting, never a fabricated label. Only
+ * ever applies to the top result; callers should not badge rank > 0.
+ */
+export function rankBadgeForPreference(
+  preference: RecommendationRequest["preference"]
+): "best-overall" | "max-capacity" | "best-value" | "compact-fit" {
+  switch (preference) {
+    case "max-capacity":
+      return "max-capacity";
+    case "lower-cost":
+      return "best-value";
+    case "smaller-three-quarter":
+      return "compact-fit";
+    case "best-overall":
+    default:
+      return "best-overall";
+  }
+}
+
 export function recommendRacks(request: RecommendationRequest): RecommendationResult {
   const generation = getGenerationForYear(request.vehicleId, request.year);
 

@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getGenerationForYear } from "@/lib/data/generations";
-import { getYearsForVehicle } from "@/lib/data/generations";
+import { getGenerationForYear, getYearsForVehicle } from "@/lib/data/generations";
 import { getVerifiedProductsForGeneration, compareFullLengthOptions } from "@/lib/generationProducts";
 import { FinderWizard } from "@/components/finder/FinderWizard";
 import { RecommendationCard } from "@/components/finder/RecommendationCard";
 import { SafetyNotice } from "@/components/SafetyNotice";
+import { OverlandScene } from "@/components/visuals/OverlandScene";
+import { Accordion } from "@/components/Accordion";
 
 const VEHICLE_ID = "toyota-4runner";
 const VEHICLE_PATH = "/toyota/4runner";
@@ -21,13 +22,15 @@ export const dynamicParams = false;
 
 interface GenerationCopy {
   intro: string;
+  topper: "tent" | "cargo" | "bike";
   faqs: { question: string; answer: string }[];
 }
 
 const GENERATION_COPY: Record<string, GenerationCopy> = {
   "4runner-5th-gen": {
     intro:
-      "This 4Runner is part of the 5th Generation (2010–2024). Three manufacturer-verified Prinsu rack fitments exist for this generation: two full-length racks (Original and Pro) and one 3/4-length rack, all installing through factory mounting points with no drilling.",
+      "Three manufacturer-verified Prinsu rack fitments exist for this generation: two full-length racks (Original and Pro) and one 3/4-length rack, all installing through factory mounting points with no drilling.",
+    topper: "tent",
     faqs: [
       {
         question: "What's different between the Original and Pro racks for the 5th Gen 4Runner?",
@@ -43,7 +46,8 @@ const GENERATION_COPY: Record<string, GenerationCopy> = {
   },
   "4runner-6th-gen": {
     intro:
-      "This 4Runner is part of the newer 6th Generation (2025–2026). Two manufacturer-verified Prinsu full-length rack fitments exist so far (Original and Pro), both bolt-on/non-drill. No 3/4-length rack has been published for this generation yet.",
+      "Two manufacturer-verified Prinsu full-length rack fitments exist so far (Original and Pro), both bolt-on/non-drill. No 3/4-length rack has been published for this generation yet.",
+    topper: "cargo",
     faqs: [
       {
         question: "Why isn't there a 3/4-length rack for this generation yet?",
@@ -87,91 +91,127 @@ export default async function YearPage({ params }: { params: Promise<{ year: str
   const comparison = compareFullLengthOptions(generation);
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
-      <header className="mb-8">
-        <p className="text-sm font-medium text-orange-700 dark:text-orange-400">
-          {generation.name} ({generation.yearStart}–{generation.yearEnd})
-        </p>
-        <h1 className="mt-1 text-3xl font-bold tracking-tight text-stone-900 sm:text-4xl dark:text-stone-50">
-          Best Roof Racks for the {year} Toyota 4Runner
-        </h1>
-        <p className="mt-3 text-stone-600 dark:text-stone-300">{copy.intro}</p>
-      </header>
-
-      <FinderWizard
-        vehicleId={VEHICLE_ID}
-        vehicleLabel="Toyota 4Runner"
-        vehiclePath={VEHICLE_PATH}
-        initialYear={year}
-      />
-
-      <section className="mt-16">
-        <h2 className="text-2xl font-bold text-stone-900 dark:text-stone-50">
-          Verified compatible products
-        </h2>
-        <p className="mt-2 text-sm text-stone-600 dark:text-stone-300">
-          Every option below has a manufacturer-published fitment statement for the{" "}
-          {generation.name} ({generation.yearStart}–{generation.yearEnd}).
-        </p>
-        <div className="mt-4 flex flex-col gap-4">
-          {products.map((rec) => (
-            <RecommendationCard key={rec.product.id} recommendation={rec} />
-          ))}
+    <div>
+      {/* HERO */}
+      <section className="bg-paper">
+        <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-4 py-14 sm:px-6 lg:grid-cols-2 lg:py-20">
+          <div>
+            <span className="text-xs font-bold tracking-widest text-clay uppercase">
+              {generation.name} · {generation.yearStart}–{generation.yearEnd}
+            </span>
+            <h1 className="mt-2 font-display text-4xl leading-tight font-semibold text-ink sm:text-5xl">
+              Best Roof Racks for the {year} Toyota 4Runner
+            </h1>
+            <p className="mt-4 max-w-md text-lg text-ink-muted">{copy.intro}</p>
+            <a
+              href="#finder"
+              className="mt-6 inline-flex items-center justify-center rounded-full bg-clay px-6 py-3 text-base font-semibold text-paper transition-colors hover:bg-clay-dark"
+            >
+              Run the finder for {year}
+            </a>
+          </div>
+          <div className="overflow-hidden rounded-3xl border border-line bg-cream shadow-sm">
+            <OverlandScene topper={copy.topper} className="h-full w-full" />
+          </div>
         </div>
       </section>
 
-      {comparison && (
-        <section className="mt-16 rounded-xl border border-stone-200 bg-white p-6 dark:border-stone-800 dark:bg-stone-900">
-          <h2 className="text-xl font-bold text-stone-900 dark:text-stone-50">
-            {comparison.cheaper.product.name} vs. {comparison.higherCapacity.product.name}
-          </h2>
-          <p className="mt-2 text-sm text-stone-600 dark:text-stone-300">
-            The {comparison.higherCapacity.product.name} carries {comparison.capacityDelta} lb more
-            manufacturer-stated static capacity than the {comparison.cheaper.product.name}, for{" "}
-            {(comparison.priceDelta).toLocaleString("en-US", {
-              style: "currency",
-              currency: "USD",
-              maximumFractionDigits: 0,
-            })}{" "}
-            more at reference price. Choose based on whether you need the extra capacity or
-            would rather save the difference.
+      {/* VERIFIED RACK OPTIONS */}
+      <section className="border-y border-line bg-cream">
+        <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
+          <h2 className="font-display text-3xl font-semibold text-ink">Verified rack options</h2>
+          <p className="mt-2 text-ink-muted">
+            Every option below has a manufacturer-published fitment statement for the{" "}
+            {generation.name} ({generation.yearStart}–{generation.yearEnd}).
           </p>
+          <div className="mt-6 flex flex-col gap-4">
+            {products.map((rec) => (
+              <RecommendationCard key={rec.product.id} recommendation={rec} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* COMPARISON */}
+      {comparison && (
+        <section className="bg-paper">
+          <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
+            <div className="rounded-3xl border border-line bg-cream/60 p-8">
+              <h2 className="font-display text-2xl font-semibold text-ink">
+                {comparison.cheaper.product.name} vs. {comparison.higherCapacity.product.name}
+              </h2>
+              <p className="mt-3 text-ink-muted">
+                The {comparison.higherCapacity.product.name} carries {comparison.capacityDelta} lb
+                more manufacturer-stated static capacity than the {comparison.cheaper.product.name},
+                for{" "}
+                {comparison.priceDelta.toLocaleString("en-US", {
+                  style: "currency",
+                  currency: "USD",
+                  maximumFractionDigits: 0,
+                })}{" "}
+                more at reference price. Choose based on whether you need the extra capacity or
+                would rather save the difference.
+              </p>
+            </div>
+          </div>
         </section>
       )}
 
-      <section className="mt-16">
-        <SafetyNotice />
+      {/* FINDER */}
+      <section id="finder" className="border-y border-line bg-cream scroll-mt-20">
+        <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
+          <div className="mb-8 text-center">
+            <h2 className="font-display text-3xl font-semibold text-ink">
+              Find your {year} 4Runner&apos;s rack
+            </h2>
+            <p className="mt-2 text-ink-muted">Two quick questions — you&apos;ve already told us the year.</p>
+          </div>
+          <FinderWizard
+            vehicleId={VEHICLE_ID}
+            vehicleLabel="Toyota 4Runner"
+            vehiclePath={VEHICLE_PATH}
+            initialYear={year}
+          />
+        </div>
       </section>
 
-      <section className="mt-16">
-        <h2 className="text-xl font-bold text-stone-900 dark:text-stone-50">Methodology</h2>
-        <p className="mt-2 text-stone-600 dark:text-stone-300">
-          Fitment shown here comes only from what Prinsu has published for this generation —
-          never guessed or extrapolated. See the full{" "}
-          <Link href={`${VEHICLE_PATH}#methodology`} className="underline hover:text-stone-800 dark:hover:text-stone-100">
-            methodology
-          </Link>{" "}
-          for how rankings and verification work.
-        </p>
+      {/* FAQ */}
+      <section className="bg-paper">
+        <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
+          <h2 className="font-display text-3xl font-semibold text-ink">FAQ</h2>
+          <dl className="mt-6 space-y-6">
+            {copy.faqs.map((faq) => (
+              <div key={faq.question}>
+                <dt className="font-semibold text-ink">{faq.question}</dt>
+                <dd className="mt-1 text-ink-muted">{faq.answer}</dd>
+              </div>
+            ))}
+          </dl>
+          <p className="mt-4 text-sm text-ink-soft">
+            More questions answered in the full{" "}
+            <Link href={`${VEHICLE_PATH}#faq`} className="underline hover:text-ink">
+              FAQ
+            </Link>
+            .
+          </p>
+        </div>
       </section>
 
-      <section className="mt-16">
-        <h2 className="text-xl font-bold text-stone-900 dark:text-stone-50">FAQ</h2>
-        <dl className="mt-4 space-y-6">
-          {copy.faqs.map((faq) => (
-            <div key={faq.question}>
-              <dt className="font-semibold text-stone-900 dark:text-stone-50">{faq.question}</dt>
-              <dd className="mt-1 text-stone-600 dark:text-stone-300">{faq.answer}</dd>
-            </div>
-          ))}
-        </dl>
-        <p className="mt-4 text-sm text-stone-500 dark:text-stone-400">
-          More questions answered in the full{" "}
-          <Link href={`${VEHICLE_PATH}#faq`} className="underline hover:text-stone-700 dark:hover:text-stone-200">
-            FAQ
-          </Link>
-          .
-        </p>
+      {/* SAFETY / METHODOLOGY — compact, bottom of page */}
+      <section className="border-t border-line bg-cream">
+        <div className="mx-auto flex max-w-3xl flex-col gap-4 px-4 py-16 sm:px-6">
+          <SafetyNotice />
+          <Accordion title="Methodology for this page">
+            <p>
+              Fitment shown here comes only from what Prinsu has published for this generation —
+              never guessed or extrapolated. See the full{" "}
+              <Link href={`${VEHICLE_PATH}#methodology`} className="underline hover:text-ink">
+                methodology
+              </Link>{" "}
+              for how rankings and verification work.
+            </p>
+          </Accordion>
+        </div>
       </section>
     </div>
   );

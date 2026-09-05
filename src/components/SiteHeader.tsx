@@ -3,16 +3,20 @@ import { SITE_NAME } from "@/lib/site";
 
 export function SiteHeader() {
   return (
-    <header className="border-b border-stone-200 bg-white dark:border-stone-800 dark:bg-stone-950">
-      <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4 sm:px-6">
+    <header className="border-b border-line bg-paper/90 backdrop-blur">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
         <Link href="/" className="flex items-center gap-2">
-          <span className="text-lg font-bold tracking-tight text-stone-900 dark:text-stone-50">
-            {SITE_NAME}
-          </span>
+          <span className="font-display text-xl font-bold tracking-tight text-ink">{SITE_NAME}</span>
         </Link>
-        <nav className="flex items-center gap-4 text-sm font-medium text-stone-600 dark:text-stone-300">
-          <Link href="/toyota/4runner" className="hover:text-orange-700 dark:hover:text-orange-400">
-            4Runner Rack Finder
+        <nav className="flex items-center gap-5 text-sm font-semibold text-ink-muted">
+          <Link href="/toyota/4runner" className="hover:text-clay">
+            4Runner Finder
+          </Link>
+          <Link
+            href="/toyota/4runner#finder"
+            className="hidden rounded-full bg-clay px-4 py-2 text-paper transition-colors hover:bg-clay-dark sm:inline-flex"
+          >
+            Find my rack
           </Link>
         </nav>
       </div>

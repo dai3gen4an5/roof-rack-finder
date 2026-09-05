@@ -14,28 +14,33 @@ export function StepShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col gap-6">
+      <div className="flex items-center justify-between gap-4">
         {onBack ? (
           <button
             type="button"
             onClick={onBack}
-            className="text-sm font-medium text-stone-500 hover:text-stone-800 dark:text-stone-400 dark:hover:text-stone-100"
+            className="text-sm font-semibold text-ink-muted hover:text-ink"
           >
             ← Back
           </button>
         ) : (
           <span />
         )}
-        <span className="text-xs font-medium tracking-wide text-stone-400 uppercase dark:text-stone-500">
-          Step {step} of {totalSteps}
-        </span>
+        <div className="flex items-center gap-1.5">
+          {Array.from({ length: totalSteps }).map((_, i) => (
+            <span
+              key={i}
+              className={`h-1.5 rounded-full transition-all ${
+                i + 1 === step ? "w-6 bg-clay" : i + 1 < step ? "w-1.5 bg-olive" : "w-1.5 bg-line"
+              }`}
+            />
+          ))}
+        </div>
       </div>
       <div>
-        <h2 className="text-xl font-semibold text-stone-900 dark:text-stone-50">{title}</h2>
-        {subtitle && (
-          <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">{subtitle}</p>
-        )}
+        <h2 className="font-display text-2xl font-semibold text-ink">{title}</h2>
+        {subtitle && <p className="mt-1 text-sm text-ink-muted">{subtitle}</p>}
       </div>
       {children}
     </div>

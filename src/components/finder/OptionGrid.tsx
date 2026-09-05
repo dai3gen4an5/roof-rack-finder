@@ -1,7 +1,10 @@
+import type { ComponentType, SVGProps } from "react";
+
 export interface OptionGridItem {
   id: string;
   label: string;
   description?: string;
+  icon?: ComponentType<SVGProps<SVGSVGElement>>;
 }
 
 export function OptionGrid({
@@ -13,19 +16,29 @@ export function OptionGrid({
 }) {
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-      {items.map((item) => (
-        <button
-          key={item.id}
-          type="button"
-          onClick={() => onSelect(item.id)}
-          className="flex flex-col items-start gap-1 rounded-lg border border-stone-200 bg-white p-4 text-left transition-colors hover:border-orange-500 hover:bg-orange-50 dark:border-stone-800 dark:bg-stone-950 dark:hover:border-orange-500 dark:hover:bg-orange-950/20"
-        >
-          <span className="font-semibold text-stone-900 dark:text-stone-50">{item.label}</span>
-          {item.description && (
-            <span className="text-sm text-stone-500 dark:text-stone-400">{item.description}</span>
-          )}
-        </button>
-      ))}
+      {items.map((item) => {
+        const Icon = item.icon;
+        return (
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => onSelect(item.id)}
+            className="group flex items-start gap-3.5 rounded-2xl border border-line bg-paper p-4 text-left transition-all hover:-translate-y-0.5 hover:border-clay hover:shadow-md"
+          >
+            {Icon && (
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-cream text-ink transition-colors group-hover:bg-clay group-hover:text-paper">
+                <Icon className="h-5.5 w-5.5" />
+              </span>
+            )}
+            <span className="flex flex-col gap-0.5">
+              <span className="font-display text-base font-semibold text-ink">{item.label}</span>
+              {item.description && (
+                <span className="text-sm text-ink-muted">{item.description}</span>
+              )}
+            </span>
+          </button>
+        );
+      })}
     </div>
   );
 }

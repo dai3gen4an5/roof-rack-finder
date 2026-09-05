@@ -2,37 +2,54 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { getYearsForVehicle } from "@/lib/data/generations";
+import { getGenerationsForVehicle } from "@/lib/data/generations";
 import { useCases } from "@/lib/data/useCases";
 import { preferences } from "@/lib/data/preferences";
 import { recommendRacks } from "@/lib/recommend";
-import type { PreferenceId, UseCaseId } from "@/lib/types";
+import type { Generation, PreferenceId, UseCaseId } from "@/lib/types";
 import { StepShell } from "@/components/finder/StepShell";
 import { OptionGrid } from "@/components/finder/OptionGrid";
 import { RecommendationCard } from "@/components/finder/RecommendationCard";
 import { SafetyNotice } from "@/components/SafetyNotice";
+import { GenerationSelectCard } from "@/components/visuals/GenerationCard";
+import { USE_CASE_ICONS, PREFERENCE_ICONS } from "@/components/finder/iconMaps";
 
-type Step = "year" | "use-case" | "preference" | "results";
+type Step = "generation" | "year" | "use-case" | "preference" | "results";
 
 export function FinderWizard({
   vehicleId,
   vehicleLabel,
   vehiclePath,
   initialYear,
+  initialGenerationId,
 }: {
   vehicleId: string;
   vehicleLabel: string;
   /** URL path to the generic finder, e.g. "/toyota/4runner". Used for the
    * "not this year?" link when `initialYear` is set. */
   vehiclePath?: string;
-  /** When set, the year step is skipped and locked to this year — used by
-   * the per-year pages, which already know the year from the URL. */
+  /** When set, the generation and year steps are skipped and locked to this
+   * year — used by the per-year pages, which already know the year. */
   initialYear?: number;
+  /** When set (and `initialYear` is not), the generation step is skipped —
+   * used by the generation marketing cards to jump straight to year choice. */
+  initialGenerationId?: string;
 }) {
-  const years = useMemo(() => getYearsForVehicle(vehicleId), [vehicleId]);
-  const flow: Step[] = initialYear != null ? ["use-case", "preference", "results"] : ["year", "use-case", "preference", "results"];
+  const generations = useMemo(() => getGenerationsForVehicle(vehicleId), [vehicleId]);
+  const initialGeneration = initialGenerationId
+    ? generations.find((g) => g.id === initialGenerationId) ?? null
+    : null;
 
-  const [step, setStep] = useState<Step>(initialYear != null ? "use-case" : "year");
+  const skipToStep: Step = initialYear != null ? "use-case" : initialGeneration ? "year" : "generation";
+  const flow: Step[] =
+    initialYear != null
+      ? ["use-case", "preference", "results"]
+      : initialGeneration
+        ? ["year", "use-case", "preference", "results"]
+        : ["generation", "year", "use-case", "preference", "results"];
+
+  const [step, setStep] = useState<Step>(skipToStep);
+  const [generation, setGeneration] = useState<Generation | null>(initialGeneration);
   const [year, setYear] = useState<number | null>(initialYear ?? null);
   const [useCase, setUseCase] = useState<UseCaseId | null>(null);
   const [preference, setPreference] = useState<PreferenceId | null>(null);
@@ -43,41 +60,65 @@ export function FinderWizard({
   }, [vehicleId, year, useCase, preference]);
 
   function reset() {
-    setStep(initialYear != null ? "use-case" : "year");
+    setStep(skipToStep);
     if (initialYear == null) setYear(null);
+    if (initialYear == null && !initialGeneration) setGeneration(null);
     setUseCase(null);
     setPreference(null);
   }
 
   const stepNumber = flow.indexOf(step) + 1;
   const totalSteps = flow.length;
+  const yearOptions = generation
+    ? Array.from(
+        { length: generation.yearEnd - generation.yearStart + 1 },
+        (_, i) => generation.yearEnd - i
+      )
+    : [];
 
   return (
-    <div className="rounded-2xl border border-stone-200 bg-stone-50 p-6 dark:border-stone-800 dark:bg-stone-900/40 sm:p-8">
-      {step === "year" && (
+    <div className="rounded-3xl border border-line bg-cream/50 p-6 sm:p-8">
+      {step === "generation" && (
+        <StepShell step={stepNumber} totalSteps={totalSteps} title="Choose your 4Runner" subtitle="Which generation is yours?">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {generations.map((g) => (
+              <GenerationSelectCard
+                key={g.id}
+                generation={g}
+                ctaLabel="Choose this generation"
+                onSelect={() => {
+                  setGeneration(g);
+                  setStep("year");
+                }}
+              />
+            ))}
+          </div>
+        </StepShell>
+      )}
+
+      {step === "year" && generation && (
         <StepShell
           step={stepNumber}
           totalSteps={totalSteps}
-          title={`Select your ${vehicleLabel} model year`}
-          subtitle="This determines which generation-specific fitments we can show you."
+          title={`Select your ${generation.name} model year`}
+          subtitle={`${generation.yearStart}–${generation.yearEnd}`}
+          onBack={initialGeneration ? undefined : () => setStep("generation")}
         >
-          <select
-            defaultValue=""
-            onChange={(e) => {
-              setYear(Number(e.target.value));
-              setStep("use-case");
-            }}
-            className="w-full rounded-lg border border-stone-300 bg-white p-3 text-base text-stone-900 dark:border-stone-700 dark:bg-stone-950 dark:text-stone-50"
-          >
-            <option value="" disabled>
-              Choose a model year…
-            </option>
-            {years.map((y) => (
-              <option key={y} value={y}>
+          <div className="flex flex-wrap gap-2">
+            {yearOptions.map((y) => (
+              <button
+                key={y}
+                type="button"
+                onClick={() => {
+                  setYear(y);
+                  setStep("use-case");
+                }}
+                className="rounded-full border border-line bg-paper px-4 py-2 text-sm font-semibold text-ink transition-colors hover:border-clay hover:bg-clay hover:text-paper"
+              >
                 {y}
-              </option>
+              </button>
             ))}
-          </select>
+          </div>
         </StepShell>
       )}
 
@@ -90,15 +131,20 @@ export function FinderWizard({
           onBack={initialYear == null ? () => setStep("year") : undefined}
         >
           {initialYear != null && vehiclePath && (
-            <p className="-mt-2 text-xs text-stone-500 dark:text-stone-400">
+            <p className="-mt-2 text-xs text-ink-soft">
               Shopping for a different year?{" "}
-              <Link href={vehiclePath} className="underline hover:text-stone-700 dark:hover:text-stone-200">
+              <Link href={vehiclePath} className="underline hover:text-ink">
                 Change model year
               </Link>
             </p>
           )}
           <OptionGrid
-            items={useCases.map((u) => ({ id: u.id, label: u.label, description: u.description }))}
+            items={useCases.map((u) => ({
+              id: u.id,
+              label: u.label,
+              description: u.description,
+              icon: USE_CASE_ICONS[u.id],
+            }))}
             onSelect={(id) => {
               setUseCase(id as UseCaseId);
               setStep("preference");
@@ -116,7 +162,12 @@ export function FinderWizard({
           onBack={() => setStep("use-case")}
         >
           <OptionGrid
-            items={preferences.map((p) => ({ id: p.id, label: p.label, description: p.description }))}
+            items={preferences.map((p) => ({
+              id: p.id,
+              label: p.label,
+              description: p.description,
+              icon: PREFERENCE_ICONS[p.id],
+            }))}
             onSelect={(id) => {
               setPreference(id as PreferenceId);
               setStep("results");
@@ -125,11 +176,11 @@ export function FinderWizard({
         </StepShell>
       )}
 
-      {step === "results" && result && (
+      {step === "results" && result && preference && useCase && (
         <StepShell
           step={stepNumber}
           totalSteps={totalSteps}
-          title="Recommended roof racks"
+          title="Your recommended roof racks"
           subtitle={
             result.generation
               ? `${vehicleLabel}, ${year} — ${result.generation.name} (${result.generation.yearStart}–${result.generation.yearEnd})`
@@ -141,19 +192,26 @@ export function FinderWizard({
             <SafetyNotice />
 
             {result.note && (
-              <p className="rounded-lg border border-stone-200 bg-white p-4 text-sm text-stone-600 dark:border-stone-800 dark:bg-stone-950 dark:text-stone-300">
+              <p className="rounded-xl border border-line bg-paper p-4 text-sm text-ink-muted">
                 {result.note}
               </p>
             )}
 
-            {result.recommendations.map((rec) => (
-              <RecommendationCard key={rec.product.id} recommendation={rec} />
+            {result.recommendations.map((rec, index) => (
+              <RecommendationCard
+                key={rec.product.id}
+                recommendation={rec}
+                variant={index === 0 ? "primary" : "secondary"}
+                rank={index}
+                preference={preference}
+                useCase={useCase}
+              />
             ))}
 
             <button
               type="button"
               onClick={reset}
-              className="self-start text-sm font-medium text-orange-700 hover:text-orange-800 dark:text-orange-400 dark:hover:text-orange-300"
+              className="self-start text-sm font-semibold text-clay hover:text-clay-dark"
             >
               Start over
             </button>

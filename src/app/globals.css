@@ -1,26 +1,59 @@
 @import "tailwindcss";
 
+/*
+ * RackFit warm outdoor palette. Deliberately a single committed light
+ * theme (no prefers-color-scheme dark variant) — the previous design's
+ * dark-mode fallback was reading as a generic black/white SaaS dashboard,
+ * which is exactly the look this redesign moves away from.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-paper: #fbf7f0;
+  --color-cream: #f4ecdd;
+  --color-warmgray: #ece4d6;
+  --color-ink: #2b2620;
+  --color-ink-muted: #5c5348;
+  --color-ink-soft: #8a8072;
+  --color-line: #e3d9c6;
+  --color-line-strong: #d3c4a8;
+  --color-clay: #c1592f;
+  --color-clay-dark: #a24923;
+  --color-olive: #6e7548;
+  --color-olive-dark: #565c38;
+  --color-sand: #e7d3ac;
+  --color-forest: #3f6b4a;
+  --color-forest-dark: #2f5138;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-paper: var(--color-paper);
+  --color-cream: var(--color-cream);
+  --color-warmgray: var(--color-warmgray);
+  --color-ink: var(--color-ink);
+  --color-ink-muted: var(--color-ink-muted);
+  --color-ink-soft: var(--color-ink-soft);
+  --color-line: var(--color-line);
+  --color-line-strong: var(--color-line-strong);
+  --color-clay: var(--color-clay);
+  --color-clay-dark: var(--color-clay-dark);
+  --color-olive: var(--color-olive);
+  --color-olive-dark: var(--color-olive-dark);
+  --color-sand: var(--color-sand);
+  --color-forest: var(--color-forest);
+  --color-forest-dark: var(--color-forest-dark);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-display: var(--font-display);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-paper);
+  color: var(--color-ink);
+}
+
+details > summary {
+  cursor: pointer;
+  list-style: none;
+}
+details > summary::-webkit-details-marker {
+  display: none;
 }
