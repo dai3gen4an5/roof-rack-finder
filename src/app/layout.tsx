@@ -32,6 +32,9 @@ export const metadata: Metadata = {
   },
   description:
     "An independent roof rack fit finder for the Toyota 4Runner. Compare manufacturer-verified rack fitments by model year, use case, and budget.",
+  verification: {
+    google: "oteuIM24kTQCtWgeK7g8hnU6Z0TwxgS3v24Uc5vNZMY",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
