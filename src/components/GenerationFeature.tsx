@@ -8,14 +8,23 @@ import { RevealOnScroll } from "@/components/media/RevealOnScroll";
  * photography with monumental year-range typography, not a small card in a
  * grid. Used twice in sequence on Home (5th Gen, then 6th Gen).
  */
-export function GenerationFeature({ generation, href }: { generation: Generation; href: string }) {
+export function GenerationFeature({
+  generation,
+  href,
+  vehicleLabel = "Toyota 4Runner",
+}: {
+  generation: Generation;
+  href: string;
+  /** Used only for the photo's alt text, e.g. "Toyota Tacoma". */
+  vehicleLabel?: string;
+}) {
   return (
     <RevealOnScroll>
       <Link href={href} className="group block">
         <div className="relative h-[70vh] min-h-[420px] w-full overflow-hidden">
           <VehicleGenerationMedia
             generationId={generation.id}
-            alt={`${generation.name} Toyota 4Runner with roof rack`}
+            alt={`${generation.name} ${vehicleLabel} with roof rack`}
             className="h-full w-full"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-ink/70 via-ink/10 to-transparent" />

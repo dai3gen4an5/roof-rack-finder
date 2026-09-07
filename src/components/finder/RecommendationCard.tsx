@@ -4,6 +4,7 @@ import { RankBadge, VerifiedFitBadge } from "@/components/finder/Badge";
 import { ProductMedia } from "@/components/media/ProductMedia";
 import { getProductPhotoAssetKey, hasPhotoAsset } from "@/lib/media";
 import { rankBadgeForPreference } from "@/lib/recommend";
+import { getVariantById } from "@/lib/data/variants";
 
 function formatPrice(price: PriceRange): string {
   const fmt = (n: number) =>
@@ -40,6 +41,7 @@ export function RecommendationCard({
   // asset is wired into src/lib/media.ts, this brings the column back
   // automatically on every card, no layout change needed.
   const hasMedia = hasPhotoAsset(getProductPhotoAssetKey(product.id));
+  const variantLabel = fitment.variantId ? getVariantById(fitment.variantId)?.label : undefined;
 
   return (
     <article className={`flex flex-col border bg-paper sm:flex-row ${isPrimary ? "border-ink" : "border-line"}`}>
@@ -69,6 +71,7 @@ export function RecommendationCard({
 
         <p className="text-sm text-ink-muted">
           Verified fit: {generation.name} ({generation.yearStart}–{generation.yearEnd})
+          {variantLabel && <> · Fits: {variantLabel}</>}
         </p>
 
         {reasons.length > 0 && (

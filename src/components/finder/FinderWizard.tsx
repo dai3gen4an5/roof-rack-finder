@@ -253,7 +253,7 @@ export function FinderWizard({
           onBack={() => setStep("preference")}
         >
           <div className="flex flex-col gap-4">
-            <SafetyNotice />
+            <SafetyNotice vehicleLabel={vehicleLabel} />
 
             {result.note && (
               <p className="border border-line bg-paper p-4 text-sm text-ink-muted">

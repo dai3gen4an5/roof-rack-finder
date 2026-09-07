@@ -26,6 +26,11 @@ export function SiteFooter() {
                 4Runner Rack Finder
               </Link>
             </li>
+            <li>
+              <Link href="/toyota/tacoma" className="hover:text-ink">
+                Tacoma Rack Finder
+              </Link>
+            </li>
           </ul>
         </div>
 
@@ -53,6 +58,7 @@ export function SiteFooter() {
         <div>
           <p className="text-xs font-bold tracking-wide text-ink-soft uppercase">Vehicle coverage</p>
           <p className="mt-3 text-sm text-ink-muted">Toyota 4Runner, 2010–2026 (5th &amp; 6th Gen).</p>
+          <p className="mt-1 text-sm text-ink-muted">Toyota Tacoma, 2005–2026 (2nd–4th Gen).</p>
           <p className="mt-2 text-sm text-ink-muted">More vehicles planned as verified data becomes available.</p>
         </div>
       </div>

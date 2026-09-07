@@ -34,27 +34,46 @@ function isNonDrill(product: Product): boolean {
 }
 
 /**
+ * Whether `year` falls within a fitment's own narrowed year range, if it
+ * has one. Most fitments apply across their whole generation (both fields
+ * omitted); some need a narrower range because the manufacturer's own
+ * stated years don't line up with the generation boundary — see
+ * `Fitment.yearStart`/`yearEnd` in types.ts.
+ */
+function matchesFitmentYearRange(fitment: Candidate["fitment"], year: number): boolean {
+  const start = fitment.yearStart ?? -Infinity;
+  const end = fitment.yearEnd ?? Infinity;
+  return year >= start && year <= end;
+}
+
+/**
  * Hard requirements every recommendation must pass, independent of ranking
- * preference: the fitment itself must be manufacturer-verified (we never
- * recommend an unverified guess), the product must be suited to the
- * requested use case, and — if the fitment is scoped to a specific vehicle
- * configuration (e.g. a cab-specific truck rack) — the requested variant
- * must match exactly.
+ * preference — checked in this order, all mandatory, none a scoring
+ * weight:
+ *   1. the requested year falls within the fitment's own year range, if
+ *      it has one narrower than the generation (see matchesFitmentYearRange)
+ *   2. if the fitment is scoped to a specific vehicle configuration (e.g.
+ *      a cab-specific truck rack), the requested variant matches exactly
+ *   3. the fitment itself is manufacturer-verified (never an unverified guess)
+ *   4. the product is suited to the requested use case
  *
- * Variant matching is a binary eligibility gate, computed here before any
- * scoring, exactly like the verified-fit and use-case checks — never a
- * scoring-time weight, never a "closest" or default variant. A fitment
- * with no `variantId` applies to every variant of its generation (or the
- * generation has none at all, e.g. every 4Runner fitment today) and is
- * always eligible regardless of what `variantId` was requested.
+ * Variant and year-range matching are both binary eligibility gates,
+ * computed here before any scoring — never a "closest" or default variant,
+ * never a partial-credit year match. A fitment with no `variantId` applies
+ * to every variant of its generation (or the generation has none at all,
+ * e.g. every 4Runner fitment today) and is always eligible regardless of
+ * what `variantId` was requested.
  */
 export function isEligibleCandidate(
   candidate: Candidate,
+  year: RecommendationRequest["year"],
   useCase: RecommendationRequest["useCase"],
   variantId?: RecommendationRequest["variantId"]
 ): boolean {
+  const yearMatches = matchesFitmentYearRange(candidate.fitment, year);
   const variantMatches = candidate.fitment.variantId == null || candidate.fitment.variantId === variantId;
   return (
+    yearMatches &&
     variantMatches &&
     candidate.fitment.verificationStatus === "verified" &&
     candidate.product.useCases.includes(useCase)
@@ -268,7 +287,9 @@ export function recommendRacks(request: RecommendationRequest): RecommendationRe
     return [{ product, merchant, fitment, generation }];
   });
 
-  const eligible = allCandidates.filter((c) => isEligibleCandidate(c, request.useCase, request.variantId));
+  const eligible = allCandidates.filter((c) =>
+    isEligibleCandidate(c, request.year, request.useCase, request.variantId)
+  );
   const lengthFiltered = eligible.filter((c) => matchesLengthPreference(c.product, request.preference));
   const sorted = sortForPreference(lengthFiltered, request.preference);
 

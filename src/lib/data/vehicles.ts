@@ -7,6 +7,12 @@ export const vehicles: Vehicle[] = [
     model: "4Runner",
     slug: ["toyota", "4runner"],
   },
+  {
+    id: "toyota-tacoma",
+    make: "Toyota",
+    model: "Tacoma",
+    slug: ["toyota", "tacoma"],
+  },
 ];
 
 export function getVehicleById(id: string): Vehicle | undefined {

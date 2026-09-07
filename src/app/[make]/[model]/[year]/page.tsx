@@ -3,87 +3,72 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getGenerationForYear, getYearsForVehicle } from "@/lib/data/generations";
 import { getVerifiedProductsForGeneration, compareFullLengthOptions } from "@/lib/generationProducts";
+import { getVehicleBySlug, vehicles } from "@/lib/data/vehicles";
+import { getVehicleContent } from "@/lib/data/vehicleContent";
 import { FinderWizard } from "@/components/finder/FinderWizard";
 import { RecommendationCard } from "@/components/finder/RecommendationCard";
 import { SafetyNotice } from "@/components/SafetyNotice";
 import { VehicleGenerationMedia } from "@/components/media/VehicleGenerationMedia";
 import { Accordion } from "@/components/Accordion";
 
-const VEHICLE_ID = "toyota-4runner";
-const VEHICLE_PATH = "/toyota/4runner";
-
+// Returns the full (make, model, year) triple for every valid combination
+// rather than relying on parent-segment param propagation — simpler and
+// avoids the ambiguity of nested generateStaticParams across two ancestor
+// dynamic segments ([make] and [model]).
 export function generateStaticParams() {
-  return getYearsForVehicle(VEHICLE_ID).map((year) => ({ year: String(year) }));
+  return vehicles.flatMap((vehicle) =>
+    getYearsForVehicle(vehicle.id).map((year) => ({
+      make: vehicle.slug[0],
+      model: vehicle.slug[1],
+      year: String(year),
+    }))
+  );
 }
 
 // Only years with a known generation get a page; anything else 404s
 // instead of silently rendering an empty/misleading page.
 export const dynamicParams = false;
 
-interface GenerationCopy {
-  intro: string;
-  faqs: { question: string; answer: string }[];
-}
-
-const GENERATION_COPY: Record<string, GenerationCopy> = {
-  "4runner-5th-gen": {
-    intro:
-      "Three manufacturer-verified Prinsu rack fitments exist for this generation: two full-length racks (Original and Pro) and one 3/4-length rack, all installing through factory mounting points with no drilling.",
-    faqs: [
-      {
-        question: "What's different between the Original and Pro racks for the 5th Gen 4Runner?",
-        answer:
-          "Both are full-length and non-drill. The Pro carries a higher manufacturer-stated capacity (700 lb dynamic / 1,200 lb static vs. 600 lb / 1,000 lb) at a higher reference price. Use the finder's \"Maximum capacity\" or \"Lower cost\" preference to see which one fits your budget and load.",
-      },
-      {
-        question: "Is the 3/4-length rack a good fit for a rooftop tent?",
-        answer:
-          "It carries the same manufacturer-stated capacity as the full-length Original (600 lb dynamic / 1,000 lb static), so it can work for lighter rooftop tents — but a full-length rack gives the tent's mounting hardware more surface to spread across. Check the tent manufacturer's own mounting requirements too.",
-      },
-    ],
-  },
-  "4runner-6th-gen": {
-    intro:
-      "Two manufacturer-verified Prinsu full-length rack fitments exist so far (Original and Pro), both bolt-on/non-drill. No 3/4-length rack has been published for this generation yet.",
-    faqs: [
-      {
-        question: "Why isn't there a 3/4-length rack for this generation yet?",
-        answer:
-          "As of our last check, Prinsu hasn't published one for the 6th Gen 4Runner. Rather than guess at a fitment that hasn't been confirmed, the finder shows an honest empty result if you select \"Smaller / 3/4 rack\" for this generation.",
-      },
-      {
-        question: "Which rack should I get for a new 6th Gen 4Runner?",
-        answer:
-          "Both the Original and Pro are full-length and non-drill. The Pro's higher manufacturer-stated capacity (700 lb dynamic / 1,200 lb static) costs more than the Original (600 lb / 1,000 lb). Use the finder to compare them against your specific use case and budget.",
-      },
-    ],
-  },
-};
-
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ year: string }>;
+  params: Promise<{ make: string; model: string; year: string }>;
 }): Promise<Metadata> {
-  const { year: yearParam } = await params;
+  const { make, model, year: yearParam } = await params;
+  const vehicle = getVehicleBySlug(make, model);
+  if (!vehicle) return {};
   const year = Number(yearParam);
-  const generation = getGenerationForYear(VEHICLE_ID, year);
+  const generation = getGenerationForYear(vehicle.id, year);
   if (!generation) return {};
 
+  const vehiclePath = `/${vehicle.slug[0]}/${vehicle.slug[1]}`;
   return {
-    title: `Best Roof Racks for the ${year} Toyota 4Runner`,
-    description: `Manufacturer-verified roof rack options for the ${year} Toyota 4Runner (${generation.name}, ${generation.yearStart}–${generation.yearEnd}). Compare capacity, price, and installation type.`,
-    alternates: { canonical: `${VEHICLE_PATH}/${year}` },
+    title: `Best Roof Racks for the ${year} ${vehicle.make} ${vehicle.model}`,
+    description: `Manufacturer-verified roof rack options for the ${year} ${vehicle.make} ${vehicle.model} (${generation.name}, ${generation.yearStart}–${generation.yearEnd}). Compare capacity, price, and installation type.`,
+    alternates: { canonical: `${vehiclePath}/${year}` },
   };
 }
 
-export default async function YearPage({ params }: { params: Promise<{ year: string }> }) {
-  const { year: yearParam } = await params;
+export default async function VehicleYearPage({
+  params,
+}: {
+  params: Promise<{ make: string; model: string; year: string }>;
+}) {
+  const { make, model, year: yearParam } = await params;
+  const vehicle = getVehicleBySlug(make, model);
+  if (!vehicle) notFound();
+  const content = getVehicleContent(vehicle.id);
+  if (!content) notFound();
+
   const year = Number(yearParam);
-  const generation = getGenerationForYear(VEHICLE_ID, year);
+  const generation = getGenerationForYear(vehicle.id, year);
   if (!generation) notFound();
 
-  const copy = GENERATION_COPY[generation.id];
+  const generationCopy = content.generationCopy[generation.id];
+  if (!generationCopy) notFound();
+
+  const vehicleLabel = `${vehicle.make} ${vehicle.model}`;
+  const vehiclePath = `/${vehicle.slug[0]}/${vehicle.slug[1]}`;
   const products = getVerifiedProductsForGeneration(generation);
   const comparison = compareFullLengthOptions(generation);
 
@@ -93,7 +78,7 @@ export default async function YearPage({ params }: { params: Promise<{ year: str
       <section className="relative h-[64vh] min-h-[440px] w-full overflow-hidden">
         <VehicleGenerationMedia
           generationId={generation.id}
-          alt={`${generation.name} Toyota 4Runner with roof rack`}
+          alt={`${generation.name} ${vehicleLabel} with roof rack`}
           className="h-full w-full"
           priority
         />
@@ -103,9 +88,9 @@ export default async function YearPage({ params }: { params: Promise<{ year: str
             {generation.name} · {generation.yearStart}–{generation.yearEnd}
           </span>
           <h1 className="mt-2 font-display text-4xl font-semibold text-paper sm:text-5xl">
-            Best Roof Racks for the {year} Toyota 4Runner
+            Best Roof Racks for the {year} {vehicleLabel}
           </h1>
-          <p className="mt-3 max-w-md text-lg text-paper/90">{copy.intro}</p>
+          <p className="mt-3 max-w-md text-lg text-paper/90">{generationCopy.intro}</p>
           <a
             href="#finder"
             className="mt-6 inline-flex w-fit items-center justify-center rounded-full bg-clay px-6 py-3 text-base font-semibold text-paper transition-colors hover:bg-clay-dark"
@@ -161,14 +146,16 @@ export default async function YearPage({ params }: { params: Promise<{ year: str
         <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
           <div className="mb-8 text-center">
             <h2 className="font-display text-3xl font-semibold text-ink">
-              Find your {year} 4Runner&apos;s rack
+              Find your {year} {vehicle.model}&apos;s rack
             </h2>
-            <p className="mt-2 text-ink-muted">Two quick questions — you&apos;ve already told us the year.</p>
+            <p className="mt-2 text-ink-muted">
+              A couple quick questions — you&apos;ve already told us the year.
+            </p>
           </div>
           <FinderWizard
-            vehicleId={VEHICLE_ID}
-            vehicleLabel="Toyota 4Runner"
-            vehiclePath={VEHICLE_PATH}
+            vehicleId={vehicle.id}
+            vehicleLabel={vehicleLabel}
+            vehiclePath={vehiclePath}
             initialYear={year}
           />
         </div>
@@ -179,7 +166,7 @@ export default async function YearPage({ params }: { params: Promise<{ year: str
         <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
           <h2 className="font-display text-3xl font-semibold text-ink">FAQ</h2>
           <dl className="mt-6 space-y-6">
-            {copy.faqs.map((faq) => (
+            {generationCopy.faqs.map((faq) => (
               <div key={faq.question}>
                 <dt className="font-semibold text-ink">{faq.question}</dt>
                 <dd className="mt-1 text-ink-muted">{faq.answer}</dd>
@@ -188,7 +175,7 @@ export default async function YearPage({ params }: { params: Promise<{ year: str
           </dl>
           <p className="mt-4 text-sm text-ink-soft">
             More questions answered in the full{" "}
-            <Link href={`${VEHICLE_PATH}#faq`} className="underline hover:text-ink">
+            <Link href={`${vehiclePath}#faq`} className="underline hover:text-ink">
               FAQ
             </Link>
             .
@@ -199,12 +186,12 @@ export default async function YearPage({ params }: { params: Promise<{ year: str
       {/* SAFETY / METHODOLOGY — compact, bottom of page */}
       <section className="border-t border-line bg-cream">
         <div className="mx-auto flex max-w-3xl flex-col gap-4 px-4 py-16 sm:px-6">
-          <SafetyNotice />
+          <SafetyNotice vehicleLabel={vehicleLabel} />
           <Accordion title="Methodology for this page">
             <p>
-              Fitment shown here comes only from what Prinsu has published for this generation —
-              never guessed or extrapolated. See the full{" "}
-              <Link href={`${VEHICLE_PATH}#methodology`} className="underline hover:text-ink">
+              Fitment shown here comes only from what the manufacturer has published for this
+              generation — never guessed or extrapolated. See the full{" "}
+              <Link href={`${vehiclePath}#methodology`} className="underline hover:text-ink">
                 methodology
               </Link>{" "}
               for how rankings and verification work.

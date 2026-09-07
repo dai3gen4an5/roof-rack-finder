@@ -48,6 +48,23 @@ export function getGenerationPhotoAssetKey(generationId: string): PhotoAssetKey 
 }
 
 /**
+ * Explicit vehicle ID -> hero/stage photo asset key lookup. The
+ * "finder-stage" and "home-hero" photos are real photographs of a specific
+ * vehicle (a 5th Gen Toyota 4Runner), not generic stock scenery — so unlike
+ * a truly vehicle-agnostic background image, they must NOT be shown on
+ * another vehicle's pages just because a component defaults to them. An
+ * unmapped vehicle ID (e.g. Tacoma, until its own photography is licensed)
+ * returns `undefined`, and callers fall back to PhotoSlot's placeholder.
+ */
+const VEHICLE_HERO_PHOTO_ASSET_KEYS: Record<string, PhotoAssetKey | undefined> = {
+  "toyota-4runner": "finder-stage",
+};
+
+export function getVehicleHeroPhotoAssetKey(vehicleId: string): PhotoAssetKey | undefined {
+  return VEHICLE_HERO_PHOTO_ASSET_KEYS[vehicleId];
+}
+
+/**
  * Explicit product ID -> photo asset key lookup — replaces an earlier
  * version that guessed the asset from a "pro" substring in the product
  * name, which would have silently mapped any future non-Prinsu "Pro" line

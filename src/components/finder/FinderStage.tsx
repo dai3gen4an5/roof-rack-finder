@@ -1,5 +1,6 @@
 import { FinderStageMedia } from "@/components/media/FinderStageMedia";
 import { FinderWizard } from "@/components/finder/FinderWizard";
+import { getVehicleHeroPhotoAssetKey } from "@/lib/media";
 
 /**
  * Stages the finder in front of its own photography rather than a flat
@@ -20,6 +21,7 @@ export function FinderStage({
     <div className="relative min-h-[720px] w-full overflow-hidden">
       <FinderStageMedia
         alt={`${vehicleLabel} with roof rack overlooking a mountain valley`}
+        assetKey={getVehicleHeroPhotoAssetKey(vehicleId)}
         className="absolute inset-0 h-full w-full"
       />
       <div className="absolute inset-0 bg-gradient-to-r from-paper via-paper/70 to-transparent" />

@@ -1,15 +1,27 @@
 import { describe, expect, it } from "vitest";
 import { bestOverallScore, isEligibleCandidate, recommendRacks } from "@/lib/recommend";
 import type { Candidate } from "@/lib/recommend";
+import { getGenerationForYear } from "@/lib/data/generations";
 import { getVariantsForGeneration } from "@/lib/data/variants";
 import type { Fitment, Product } from "@/lib/types";
 
 const VEHICLE_ID = "toyota-4runner";
+const TACOMA_VEHICLE_ID = "toyota-tacoma";
 
 function recommend(year: number) {
   return recommendRacks({
     vehicleId: VEHICLE_ID,
     year,
+    useCase: "overlanding",
+    preference: "best-overall",
+  });
+}
+
+function recommendTacoma(year: number, variantId?: string) {
+  return recommendRacks({
+    vehicleId: TACOMA_VEHICLE_ID,
+    year,
+    variantId,
     useCase: "overlanding",
     preference: "best-overall",
   });
@@ -154,7 +166,7 @@ describe("recommendRacks - preferences", () => {
 describe("recommendRacks - unknown vehicle", () => {
   it("returns no recommendations for an unsupported vehicle id", () => {
     const result = recommendRacks({
-      vehicleId: "toyota-tacoma",
+      vehicleId: "toyota-tundra",
       year: 2020,
       useCase: "overlanding",
       preference: "best-overall",
@@ -208,17 +220,28 @@ describe("isEligibleCandidate - verified fit is mandatory", () => {
   }
 
   it("accepts a verified fitment matching the use case", () => {
-    expect(isEligibleCandidate(candidate(), "overlanding")).toBe(true);
+    expect(isEligibleCandidate(candidate(), 2018, "overlanding")).toBe(true);
   });
 
   it("rejects an unverified fitment even if the use case matches", () => {
-    expect(isEligibleCandidate(candidate({ verificationStatus: "unverified" }), "overlanding")).toBe(
-      false
-    );
+    expect(
+      isEligibleCandidate(candidate({ verificationStatus: "unverified" }), 2018, "overlanding")
+    ).toBe(false);
   });
 
   it("rejects a verified fitment for an unsupported use case", () => {
-    expect(isEligibleCandidate(candidate(), "kayak-surf")).toBe(false);
+    expect(isEligibleCandidate(candidate(), 2018, "kayak-surf")).toBe(false);
+  });
+
+  it("rejects a fitment whose own narrowed year range excludes the requested year", () => {
+    expect(isEligibleCandidate(candidate({ yearStart: 2015 }), 2012, "overlanding")).toBe(false);
+    expect(isEligibleCandidate(candidate({ yearEnd: 2020 }), 2022, "overlanding")).toBe(false);
+  });
+
+  it("accepts a fitment whose narrowed year range includes the requested year", () => {
+    expect(isEligibleCandidate(candidate({ yearStart: 2015, yearEnd: 2020 }), 2018, "overlanding")).toBe(
+      true
+    );
   });
 });
 
@@ -270,37 +293,173 @@ describe("isEligibleCandidate - variant matching (synthetic fixtures, no real ve
   }
 
   it("includes a fitment scoped to variant-a when variant-a is requested", () => {
-    expect(isEligibleCandidate(candidate({ variantId: "variant-a" }), "overlanding", "variant-a")).toBe(
-      true
-    );
+    expect(
+      isEligibleCandidate(candidate({ variantId: "variant-a" }), 2022, "overlanding", "variant-a")
+    ).toBe(true);
   });
 
   it("excludes a fitment scoped to variant-a when variant-b is requested", () => {
-    expect(isEligibleCandidate(candidate({ variantId: "variant-a" }), "overlanding", "variant-b")).toBe(
-      false
-    );
+    expect(
+      isEligibleCandidate(candidate({ variantId: "variant-a" }), 2022, "overlanding", "variant-b")
+    ).toBe(false);
   });
 
   it("excludes a variant-scoped fitment when no variant is requested at all", () => {
-    expect(isEligibleCandidate(candidate({ variantId: "variant-a" }), "overlanding", undefined)).toBe(
-      false
-    );
+    expect(
+      isEligibleCandidate(candidate({ variantId: "variant-a" }), 2022, "overlanding", undefined)
+    ).toBe(false);
   });
 
   it("excludes a variant-scoped fitment when an unknown/stale variant id is requested", () => {
     expect(
-      isEligibleCandidate(candidate({ variantId: "variant-a" }), "overlanding", "variant-does-not-exist")
+      isEligibleCandidate(
+        candidate({ variantId: "variant-a" }),
+        2022,
+        "overlanding",
+        "variant-does-not-exist"
+      )
     ).toBe(false);
   });
 
   it("includes a fitment with no variantId regardless of which variant (or none) is requested", () => {
     // variantId omitted entirely (undefined) — the default shape for every
     // existing 4Runner fitment today.
-    expect(isEligibleCandidate(candidate(), "overlanding", undefined)).toBe(true);
-    expect(isEligibleCandidate(candidate(), "overlanding", "variant-a")).toBe(true);
-    expect(isEligibleCandidate(candidate(), "overlanding", "variant-b")).toBe(true);
+    expect(isEligibleCandidate(candidate(), 2022, "overlanding", undefined)).toBe(true);
+    expect(isEligibleCandidate(candidate(), 2022, "overlanding", "variant-a")).toBe(true);
+    expect(isEligibleCandidate(candidate(), 2022, "overlanding", "variant-b")).toBe(true);
     // variantId explicitly null — same meaning as omitted.
-    expect(isEligibleCandidate(candidate({ variantId: null }), "overlanding", "variant-a")).toBe(true);
+    expect(isEligibleCandidate(candidate({ variantId: null }), 2022, "overlanding", "variant-a")).toBe(
+      true
+    );
+  });
+});
+
+describe("recommendRacks - Tacoma generation resolution by year", () => {
+  it("2005 and 2015 resolve to 2nd Gen only", () => {
+    for (const year of [2005, 2015]) {
+      expect(getGenerationForYear(TACOMA_VEHICLE_ID, year)?.id).toBe("tacoma-2nd-gen");
+    }
+  });
+
+  it("2016 and 2023 resolve to 3rd Gen only", () => {
+    for (const year of [2016, 2023]) {
+      expect(getGenerationForYear(TACOMA_VEHICLE_ID, year)?.id).toBe("tacoma-3rd-gen");
+    }
+  });
+
+  it("2024 and 2026 resolve to 4th Gen only", () => {
+    for (const year of [2024, 2026]) {
+      expect(getGenerationForYear(TACOMA_VEHICLE_ID, year)?.id).toBe("tacoma-4th-gen");
+    }
+  });
+});
+
+describe("recommendRacks - Tacoma variant (cab configuration) eligibility", () => {
+  it("2015 Double Cab returns only 2nd Gen products, never a 3rd Gen product", () => {
+    const result = recommendTacoma(2015, "tacoma-2nd-gen-double-cab");
+    expect(result.generation?.id).toBe("tacoma-2nd-gen");
+    expect(result.recommendations.length).toBeGreaterThan(0);
+    for (const rec of result.recommendations) {
+      expect(rec.generation.id).toBe("tacoma-2nd-gen");
+    }
+  });
+
+  it("2016 Double Cab returns only 3rd Gen products, never a 2nd Gen product", () => {
+    const result = recommendTacoma(2016, "tacoma-3rd-gen-double-cab");
+    expect(result.generation?.id).toBe("tacoma-3rd-gen");
+    expect(result.recommendations.length).toBeGreaterThan(0);
+    for (const rec of result.recommendations) {
+      expect(rec.generation.id).toBe("tacoma-3rd-gen");
+    }
+  });
+
+  it("2022 Access Cab includes the Access Rack", () => {
+    const result = recommendTacoma(2022, "tacoma-3rd-gen-access-cab");
+    expect(result.recommendations.map((r) => r.product.id)).toContain("prinsu-tacoma-access-rack");
+  });
+
+  it("2023 Access Cab returns a safe empty result — no Access Rack, and no Cab Rack substituted either", () => {
+    // 2023 falls outside the Access Rack's verified 2005-2022 range, and the
+    // Cab Rack products are Double Cab-verified, not Access Cab-verified —
+    // so nothing may be substituted. This is the core "no guessing" case:
+    // a manufacturer-year gap must surface as an honest empty result, never
+    // silently filled by the nearest available product.
+    const result = recommendTacoma(2023, "tacoma-3rd-gen-access-cab");
+    expect(result.recommendations).toHaveLength(0);
+    expect(result.note).not.toBeNull();
+  });
+
+  it("2023 Double Cab returns the Double-Cab-verified Cab Rack products", () => {
+    const result = recommendTacoma(2023, "tacoma-3rd-gen-double-cab");
+    const ids = result.recommendations.map((r) => r.product.id);
+    expect(ids).toContain("prinsu-tacoma-cab-rack-original");
+    expect(ids).toContain("prinsu-tacoma-cab-rack-pro");
+    expect(ids).not.toContain("prinsu-tacoma-access-rack");
+  });
+
+  it("Double Cab never receives the Access Rack, and Access Cab never receives a Cab Rack product", () => {
+    const doubleCab = recommendTacoma(2020, "tacoma-3rd-gen-double-cab");
+    expect(doubleCab.recommendations.map((r) => r.product.id)).not.toContain("prinsu-tacoma-access-rack");
+    const accessCab = recommendTacoma(2020, "tacoma-3rd-gen-access-cab");
+    expect(accessCab.recommendations.map((r) => r.product.id)).not.toContain(
+      "prinsu-tacoma-cab-rack-original"
+    );
+    expect(accessCab.recommendations.map((r) => r.product.id)).not.toContain("prinsu-tacoma-cab-rack-pro");
+    for (const rec of accessCab.recommendations) {
+      expect(rec.fitment.variantId).toBe("tacoma-3rd-gen-access-cab");
+    }
+  });
+
+  it("requesting no variant at all on a generation that has variants returns a safe, helpful empty result", () => {
+    // Every 2nd/3rd Gen fitment is now variant-scoped (Double Cab or Access
+    // Cab) — there is no verified variant-agnostic product left for these
+    // generations, so skipping the configuration step must never silently
+    // default to either cab's products.
+    const result = recommendTacoma(2018, undefined);
+    expect(result.generation?.id).toBe("tacoma-3rd-gen");
+    expect(result.recommendations).toHaveLength(0);
+    expect(result.note).toMatch(/configuration/i);
+  });
+
+  it("4th Gen (no variants) returns recommendations with no variantId required", () => {
+    const result = recommendTacoma(2024, undefined);
+    expect(result.generation?.id).toBe("tacoma-4th-gen");
+    expect(result.recommendations.length).toBeGreaterThan(0);
+  });
+});
+
+describe("recommendRacks - cross-vehicle isolation", () => {
+  it("the same model year never mixes 4Runner and Tacoma products or generations", () => {
+    const fourRunner = recommend(2018);
+    const tacoma = recommendTacoma(2018, "tacoma-3rd-gen-double-cab");
+    expect(fourRunner.generation?.id).toBe("4runner-5th-gen");
+    expect(tacoma.generation?.id).toBe("tacoma-3rd-gen");
+
+    const fourRunnerIds = new Set(fourRunner.recommendations.map((r) => r.product.id));
+    const tacomaIds = new Set(tacoma.recommendations.map((r) => r.product.id));
+    for (const id of tacomaIds) {
+      expect(fourRunnerIds.has(id)).toBe(false);
+    }
+    for (const rec of fourRunner.recommendations) {
+      expect(rec.generation.vehicleId).toBe(VEHICLE_ID);
+    }
+    for (const rec of tacoma.recommendations) {
+      expect(rec.generation.vehicleId).toBe(TACOMA_VEHICLE_ID);
+    }
+  });
+});
+
+describe("getVariantsForGeneration - Tacoma has cab-configuration variants where verified", () => {
+  it("2nd and 3rd Gen each expose Double Cab and Access Cab", () => {
+    for (const genId of ["tacoma-2nd-gen", "tacoma-3rd-gen"]) {
+      const labels = getVariantsForGeneration(genId).map((v) => v.label);
+      expect(labels).toContain("Double Cab");
+      expect(labels).toContain("Access Cab");
+    }
+  });
+
+  it("4th Gen has no variants (no manufacturer-stated cab restriction found)", () => {
+    expect(getVariantsForGeneration("tacoma-4th-gen")).toEqual([]);
   });
 });
 

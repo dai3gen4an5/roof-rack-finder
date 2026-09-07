@@ -15,6 +15,27 @@ export const generations: Generation[] = [
     yearStart: 2025,
     yearEnd: 2026,
   },
+  {
+    id: "tacoma-2nd-gen",
+    vehicleId: "toyota-tacoma",
+    name: "2nd Generation",
+    yearStart: 2005,
+    yearEnd: 2015,
+  },
+  {
+    id: "tacoma-3rd-gen",
+    vehicleId: "toyota-tacoma",
+    name: "3rd Generation",
+    yearStart: 2016,
+    yearEnd: 2023,
+  },
+  {
+    id: "tacoma-4th-gen",
+    vehicleId: "toyota-tacoma",
+    name: "4th Generation",
+    yearStart: 2024,
+    yearEnd: 2026,
+  },
 ];
 
 /** Returns the generation whose year range covers `year`, for the given vehicle. */

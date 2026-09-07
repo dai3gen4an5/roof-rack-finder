@@ -51,6 +51,9 @@ export function SiteHeader() {
           <Link href="/toyota/4runner" className="hidden hover:opacity-70 sm:inline">
             Toyota 4Runner
           </Link>
+          <Link href="/toyota/tacoma" className="hidden hover:opacity-70 sm:inline">
+            Toyota Tacoma
+          </Link>
           <Link href="/#how-it-works" className="hidden hover:opacity-70 md:inline">
             How It Works
           </Link>

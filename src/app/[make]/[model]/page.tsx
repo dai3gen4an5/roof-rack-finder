@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { FinderWizard } from "@/components/finder/FinderWizard";
 import { getGenerationsForVehicle, getYearsForVehicle } from "@/lib/data/generations";
 import { getVerifiedProductsForGeneration, compareFullLengthOptions } from "@/lib/generationProducts";
+import { getVehicleBySlug, vehicles } from "@/lib/data/vehicles";
+import { getVehicleContent } from "@/lib/data/vehicleContent";
+import { getVehicleHeroPhotoAssetKey } from "@/lib/media";
 import { GenerationFeature } from "@/components/GenerationFeature";
 import { RecommendationCard } from "@/components/finder/RecommendationCard";
 import { FinderStageMedia } from "@/components/media/FinderStageMedia";
@@ -10,72 +14,61 @@ import { RevealOnScroll } from "@/components/media/RevealOnScroll";
 import { Accordion } from "@/components/Accordion";
 import { SafetyNotice } from "@/components/SafetyNotice";
 
-export const metadata: Metadata = {
-  title: "Toyota 4Runner Roof Rack Fit Finder",
-  description:
-    "Find a manufacturer-verified roof rack for your 2010–2026 Toyota 4Runner. Compare fitment, load capacity, installation type, and reference price by use case.",
-  alternates: { canonical: "/toyota/4runner" },
-};
+export function generateStaticParams() {
+  return vehicles.map((v) => ({ make: v.slug[0], model: v.slug[1] }));
+}
 
-const faqs = [
-  {
-    question: "How do you decide a rack \"fits\" my 4Runner?",
-    answer:
-      "We only list a fitment when the rack manufacturer states it directly for a given model year range on their own product page. We don't infer fitment from vehicle dimensions, other model years, or similar-looking parts.",
-  },
-  {
-    question: "What's the difference between dynamic and static capacity?",
-    answer:
-      "Dynamic capacity is the manufacturer-rated load limit while the vehicle is being driven. Static capacity is the rated limit while the vehicle is parked (e.g. camping in a rooftop tent). Both are set by the rack manufacturer for that specific rack.",
-  },
-  {
-    question: "Is the rack's load capacity the same as my 4Runner's roof-load limit?",
-    answer:
-      "No. Those are two separate limits. The rack manufacturer only rates the rack itself. Toyota separately publishes a roof-load limit for the vehicle in the owner's manual. Always follow whichever limit is lower — check your owner's manual before loading anything.",
-  },
-  {
-    question: "Why is there no 3/4-length rack shown for the 2025–2026 4Runner?",
-    answer:
-      "As of our last data check, Prinsu has not published a 3/4-length rack for the 6th generation 4Runner. We show an honest empty result rather than suggesting a rack that hasn't been confirmed to fit.",
-  },
-  {
-    question: "Should I get the Original or the Pro rack?",
-    answer:
-      "Both are full-length, non-drill, manufacturer-verified fits. The Original is the lower-cost, still-capable option; the Pro costs more but carries a higher manufacturer-stated capacity. Pick \"Maximum capacity\" in the finder if you specifically need the extra headroom, or \"Lower cost\" if the Original's capacity already covers your load.",
-  },
-  {
-    question: "Are the listed prices guaranteed?",
-    answer:
-      "No. Prices are labeled \"reference price\" because manufacturers change pricing over time, and change even faster during sales. Always confirm the current price on the manufacturer's page before buying.",
-  },
-  {
-    question: "Do you earn money if I buy through your links?",
-    answer: "Not currently. See the Affiliate Disclosure section below.",
-  },
-];
+// Only vehicles with real data get a page; anything else 404s instead of
+// silently rendering an empty/misleading page.
+export const dynamicParams = false;
 
-export default function ToyotaFourRunnerPage() {
-  const generations = getGenerationsForVehicle("toyota-4runner");
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ make: string; model: string }>;
+}): Promise<Metadata> {
+  const { make, model } = await params;
+  const vehicle = getVehicleBySlug(make, model);
+  const content = vehicle ? getVehicleContent(vehicle.id) : undefined;
+  if (!vehicle || !content) return {};
+
+  return {
+    title: content.metaTitle,
+    description: content.metaDescription,
+    alternates: { canonical: `/${vehicle.slug[0]}/${vehicle.slug[1]}` },
+  };
+}
+
+export default async function VehiclePage({
+  params,
+}: {
+  params: Promise<{ make: string; model: string }>;
+}) {
+  const { make, model } = await params;
+  const vehicle = getVehicleBySlug(make, model);
+  const content = vehicle ? getVehicleContent(vehicle.id) : undefined;
+  if (!vehicle || !content) notFound();
+
+  const vehicleLabel = `${vehicle.make} ${vehicle.model}`;
+  const vehiclePath = `/${vehicle.slug[0]}/${vehicle.slug[1]}`;
+  const generations = getGenerationsForVehicle(vehicle.id);
 
   return (
     <div>
       {/* VISUAL HERO */}
       <section className="relative h-[64vh] min-h-[440px] w-full overflow-hidden">
         <FinderStageMedia
-          alt="Toyota 4Runner with roof rack overlooking a mountain valley"
+          alt={`${vehicleLabel} with roof rack overlooking a mountain valley`}
+          assetKey={getVehicleHeroPhotoAssetKey(vehicle.id)}
           className="h-full w-full"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-ink/60 via-ink/10 to-transparent" />
         <div className="relative flex h-full flex-col justify-end px-4 pb-14 sm:px-6 lg:px-16">
-          <span className="text-xs font-bold tracking-[0.2em] text-clay uppercase">
-            Toyota 4Runner
-          </span>
+          <span className="text-xs font-bold tracking-[0.2em] text-clay uppercase">{vehicleLabel}</span>
           <h1 className="mt-2 font-display text-4xl font-semibold text-paper sm:text-5xl">
             Roof Rack Fit Finder
           </h1>
-          <p className="mt-3 max-w-md text-lg text-paper/90">
-            Covers 2010–2026 (5th &amp; 6th Gen). Manufacturer-verified fitment only.
-          </p>
+          <p className="mt-3 max-w-md text-lg text-paper/90">{content.heroSubtitle}</p>
           <a
             href="#finder"
             className="mt-6 inline-flex w-fit items-center justify-center rounded-full bg-clay px-6 py-3 text-base font-semibold text-paper transition-colors hover:bg-clay-dark"
@@ -88,7 +81,12 @@ export default function ToyotaFourRunnerPage() {
       {/* GENERATION NAVIGATION */}
       <section>
         {generations.map((g) => (
-          <GenerationFeature key={g.id} generation={g} href={`/toyota/4runner/${g.yearEnd}`} />
+          <GenerationFeature
+            key={g.id}
+            generation={g}
+            href={`${vehiclePath}/${g.yearEnd}`}
+            vehicleLabel={vehicleLabel}
+          />
         ))}
       </section>
 
@@ -99,7 +97,7 @@ export default function ToyotaFourRunnerPage() {
             <h2 className="font-display text-3xl font-semibold text-ink">Let&apos;s find your rack</h2>
             <p className="mt-2 text-ink-muted">Three quick questions, real manufacturer-verified results.</p>
           </div>
-          <FinderWizard vehicleId="toyota-4runner" vehicleLabel="Toyota 4Runner" vehiclePath="/toyota/4runner" />
+          <FinderWizard vehicleId={vehicle.id} vehicleLabel={vehicleLabel} vehiclePath={vehiclePath} />
         </div>
       </section>
 
@@ -156,13 +154,13 @@ export default function ToyotaFourRunnerPage() {
             Browse by model year
           </h2>
           <div className="mt-3 flex flex-wrap gap-2">
-            {getYearsForVehicle("toyota-4runner")
+            {getYearsForVehicle(vehicle.id)
               .slice()
               .reverse()
               .map((year) => (
                 <Link
                   key={year}
-                  href={`/toyota/4runner/${year}`}
+                  href={`${vehiclePath}/${year}`}
                   className="rounded-full border border-line px-3 py-1 text-sm text-ink-muted transition-colors hover:border-clay hover:text-clay"
                 >
                   {year}
@@ -177,7 +175,7 @@ export default function ToyotaFourRunnerPage() {
         <div className="mx-auto max-w-3xl px-4 py-20 sm:px-6">
           <h2 className="font-display text-3xl font-semibold text-ink">FAQ</h2>
           <dl className="mt-6 space-y-6">
-            {faqs.map((faq) => (
+            {content.faqs.map((faq) => (
               <div key={faq.question}>
                 <dt className="font-semibold text-ink">{faq.question}</dt>
                 <dd className="mt-1 text-ink-muted">{faq.answer}</dd>
@@ -190,13 +188,13 @@ export default function ToyotaFourRunnerPage() {
       {/* SAFETY / METHODOLOGY / DISCLOSURE — de-emphasized, at the bottom */}
       <section className="bg-paper">
         <div className="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-16 sm:px-6">
-          <SafetyNotice />
+          <SafetyNotice vehicleLabel={vehicleLabel} />
 
           <div id="methodology" className="scroll-mt-20">
             <Accordion title="About & Methodology">
               <p>
-                RackFit is an independent site to help 4Runner owners compare roof racks. We are
-                not affiliated with Toyota or any rack manufacturer. A few things we hold
+                RackFit is an independent site to help {vehicle.model} owners compare roof racks. We
+                are not affiliated with Toyota or any rack manufacturer. A few things we hold
                 ourselves to on every page:
               </p>
               <ul className="list-disc space-y-2 pl-5">
@@ -209,9 +207,9 @@ export default function ToyotaFourRunnerPage() {
                   identify your model year and generation — never as evidence that a rack fits.
                 </li>
                 <li>
-                  A rack&apos;s manufacturer-stated load capacity is not the same as your
-                  4Runner&apos;s roof-load limit set by Toyota. See the safety note above — always
-                  confirm your vehicle&apos;s limit in the owner&apos;s manual.
+                  A rack&apos;s manufacturer-stated load capacity is not the same as your{" "}
+                  {vehicle.model}&apos;s roof-load limit set by Toyota. See the safety note above —
+                  always confirm your vehicle&apos;s limit in the owner&apos;s manual.
                 </li>
                 <li>Reference prices can and do change; they are not a live quote or a guarantee.</li>
                 <li>
@@ -249,8 +247,10 @@ export default function ToyotaFourRunnerPage() {
                 drawn directly from these same rules, so the ranking is never a mystery.
               </p>
               <p>
-                <strong>Toyota 4Runner generations covered:</strong> 5th Generation (2010–2024) and
-                6th Generation (2025–2026).
+                <strong>
+                  {vehicleLabel} generations covered:
+                </strong>{" "}
+                {content.generationsCoveredDetail}
               </p>
             </Accordion>
           </div>

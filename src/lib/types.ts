@@ -152,6 +152,19 @@ export interface Fitment {
    * cab-specific truck rack) — never inferred or defaulted.
    */
   variantId?: Variant["id"] | null;
+  /**
+   * Narrows this fitment's applicable years to less than the full
+   * generation range. Omit both for a fitment that applies across the
+   * whole generation (the common case, and every existing 4Runner
+   * fitment). Needed when a product's own manufacturer-stated year range
+   * doesn't line up with the generation boundary — e.g. a product
+   * discontinued mid-generation, or (as found for one Tacoma product)
+   * conflicting year statements on the manufacturer's own page, resolved
+   * by taking the most conservative overlap. Never invent a generation
+   * boundary to avoid this — use the override instead.
+   */
+  yearStart?: number;
+  yearEnd?: number;
   /** URL of the manufacturer's own fitment statement (fit guide, product page, etc.). */
   sourceUrl: string;
   verificationStatus: VerificationStatus;
