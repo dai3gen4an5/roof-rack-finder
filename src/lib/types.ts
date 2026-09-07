@@ -31,6 +31,19 @@ export interface Merchant {
   websiteUrl: string;
 }
 
+/**
+ * A configuration axis within a generation that fitment can depend on
+ * independent of model year — e.g. cab type on a truck. Not every vehicle
+ * has any; today's Toyota 4Runner data has none at all (see
+ * `src/lib/data/variants.ts`). Scoped to a generation the same way
+ * `Fitment` is, since which variants exist can change across a redesign.
+ */
+export interface Variant {
+  id: string;
+  generationId: Generation["id"];
+  label: string;
+}
+
 export type RackLength = "full" | "three-quarter";
 
 export type InstallationType =
@@ -131,6 +144,14 @@ export interface Fitment {
   id: string;
   productId: Product["id"];
   generationId: Generation["id"];
+  /**
+   * Null/omitted = this fitment applies to every variant of the generation
+   * (or the generation has no variants at all — true for every existing
+   * 4Runner fitment today). Set to a specific `Variant["id"]` only when the
+   * manufacturer's own fitment statement is variant-specific (e.g. a
+   * cab-specific truck rack) — never inferred or defaulted.
+   */
+  variantId?: Variant["id"] | null;
   /** URL of the manufacturer's own fitment statement (fit guide, product page, etc.). */
   sourceUrl: string;
   verificationStatus: VerificationStatus;
@@ -155,6 +176,11 @@ export interface Recommendation {
 export interface RecommendationRequest {
   vehicleId: Vehicle["id"];
   year: number;
+  /** Required in practice whenever the resolved generation has any
+   * `Variant` rows; omit for vehicles/generations that don't (e.g. every
+   * 4Runner request today). Never inferred or defaulted — see
+   * `isEligibleCandidate` in recommend.ts. */
+  variantId?: Variant["id"];
   useCase: UseCaseId;
   preference: PreferenceId;
 }

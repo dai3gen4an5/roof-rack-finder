@@ -2,19 +2,21 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { getGenerationsForVehicle } from "@/lib/data/generations";
+import { getGenerationForYear, getGenerationsForVehicle } from "@/lib/data/generations";
+import { getVariantsForGeneration } from "@/lib/data/variants";
 import { useCases } from "@/lib/data/useCases";
 import { preferences } from "@/lib/data/preferences";
 import { recommendRacks } from "@/lib/recommend";
-import type { Generation, PreferenceId, UseCaseId } from "@/lib/types";
+import type { Generation, PreferenceId, UseCaseId, Variant } from "@/lib/types";
 import { StepShell } from "@/components/finder/StepShell";
 import { OptionGrid } from "@/components/finder/OptionGrid";
 import { RecommendationCard } from "@/components/finder/RecommendationCard";
 import { SafetyNotice } from "@/components/SafetyNotice";
 import { GenerationOption } from "@/components/finder/GenerationOption";
+import { VariantOption } from "@/components/finder/VariantOption";
 import { USE_CASE_ICONS, PREFERENCE_ICONS } from "@/components/finder/iconMaps";
 
-type Step = "generation" | "year" | "use-case" | "preference" | "results";
+type Step = "generation" | "year" | "variant" | "use-case" | "preference" | "results";
 
 export function FinderWizard({
   vehicleId,
@@ -36,33 +38,60 @@ export function FinderWizard({
   initialGenerationId?: string;
 }) {
   const generations = useMemo(() => getGenerationsForVehicle(vehicleId), [vehicleId]);
-  const initialGeneration = initialGenerationId
-    ? generations.find((g) => g.id === initialGenerationId) ?? null
+  const initialGenerationFromProp = initialGenerationId
+    ? (generations.find((g) => g.id === initialGenerationId) ?? null)
     : null;
 
-  const skipToStep: Step = initialYear != null ? "use-case" : initialGeneration ? "year" : "generation";
-  const flow: Step[] =
+  // Resolved as early as it can be known, so whether this generation has a
+  // configuration axis (see hasVariantStep below) is correct from the very
+  // first render — not just after the user clicks through a "generation"
+  // step that might not even be part of this flow (e.g. year pages).
+  const [generation, setGeneration] = useState<Generation | null>(
+    () =>
+      initialGenerationFromProp ??
+      (initialYear != null ? (getGenerationForYear(vehicleId, initialYear) ?? null) : null)
+  );
+  const hasVariantStep = generation ? getVariantsForGeneration(generation.id).length > 0 : false;
+
+  const skipToStep: Step =
     initialYear != null
-      ? ["use-case", "preference", "results"]
-      : initialGeneration
-        ? ["year", "use-case", "preference", "results"]
-        : ["generation", "year", "use-case", "preference", "results"];
+      ? hasVariantStep
+        ? "variant"
+        : "use-case"
+      : initialGenerationFromProp
+        ? "year"
+        : "generation";
+
+  // Not a static array: which steps exist depends on whether the resolved
+  // generation turns out to have a configuration axis, which can only be
+  // known once a generation is resolved (immediately for the year-page /
+  // preset-generation entry points; only after the "generation" step
+  // otherwise) — this recomputes as `generation` state changes.
+  const flow: Step[] = useMemo(() => {
+    const steps: Step[] = [];
+    if (initialYear == null && !initialGenerationFromProp) steps.push("generation");
+    if (initialYear == null) steps.push("year");
+    if (hasVariantStep) steps.push("variant");
+    steps.push("use-case", "preference", "results");
+    return steps;
+  }, [initialYear, initialGenerationFromProp, hasVariantStep]);
 
   const [step, setStep] = useState<Step>(skipToStep);
-  const [generation, setGeneration] = useState<Generation | null>(initialGeneration);
   const [year, setYear] = useState<number | null>(initialYear ?? null);
+  const [variant, setVariant] = useState<Variant | null>(null);
   const [useCase, setUseCase] = useState<UseCaseId | null>(null);
   const [preference, setPreference] = useState<PreferenceId | null>(null);
 
   const result = useMemo(() => {
     if (year == null || useCase == null || preference == null) return null;
-    return recommendRacks({ vehicleId, year, useCase, preference });
-  }, [vehicleId, year, useCase, preference]);
+    return recommendRacks({ vehicleId, year, variantId: variant?.id, useCase, preference });
+  }, [vehicleId, year, variant, useCase, preference]);
 
   function reset() {
     setStep(skipToStep);
     if (initialYear == null) setYear(null);
-    if (initialYear == null && !initialGeneration) setGeneration(null);
+    if (initialYear == null && !initialGenerationFromProp) setGeneration(null);
+    setVariant(null);
     setUseCase(null);
     setPreference(null);
   }
@@ -75,6 +104,7 @@ export function FinderWizard({
         (_, i) => generation.yearEnd - i
       )
     : [];
+  const variantsForGeneration = generation ? getVariantsForGeneration(generation.id) : [];
 
   return (
     <div className="border border-line bg-paper p-6 sm:p-8">
@@ -107,7 +137,7 @@ export function FinderWizard({
           totalSteps={totalSteps}
           title={`Select your ${generation.name} model year`}
           subtitle={`${generation.yearStart}–${generation.yearEnd}`}
-          onBack={initialGeneration ? undefined : () => setStep("generation")}
+          onBack={initialGenerationFromProp ? undefined : () => setStep("generation")}
         >
           <div className="flex flex-wrap gap-2">
             {yearOptions.map((y) => (
@@ -116,12 +146,35 @@ export function FinderWizard({
                 type="button"
                 onClick={() => {
                   setYear(y);
-                  setStep("use-case");
+                  setStep(hasVariantStep ? "variant" : "use-case");
                 }}
                 className="rounded-full border border-line bg-paper px-4 py-2 text-sm font-semibold text-ink transition-colors hover:border-clay hover:bg-clay hover:text-paper"
               >
                 {y}
               </button>
+            ))}
+          </div>
+        </StepShell>
+      )}
+
+      {step === "variant" && generation && (
+        <StepShell
+          step={stepNumber}
+          totalSteps={totalSteps}
+          title="Vehicle configuration"
+          subtitle="Which configuration is yours?"
+          onBack={initialYear == null ? () => setStep("year") : undefined}
+        >
+          <div className="flex flex-col gap-3 sm:flex-row">
+            {variantsForGeneration.map((v) => (
+              <VariantOption
+                key={v.id}
+                variant={v}
+                onSelect={() => {
+                  setVariant(v);
+                  setStep("use-case");
+                }}
+              />
             ))}
           </div>
         </StepShell>
@@ -133,7 +186,13 @@ export function FinderWizard({
           totalSteps={totalSteps}
           title="What do you carry?"
           subtitle="Pick the main thing you plan to load on the rack."
-          onBack={initialYear == null ? () => setStep("year") : undefined}
+          onBack={
+            hasVariantStep
+              ? () => setStep("variant")
+              : initialYear == null
+                ? () => setStep("year")
+                : undefined
+          }
         >
           {initialYear != null && vehiclePath && (
             <p className="-mt-2 text-xs text-ink-soft">

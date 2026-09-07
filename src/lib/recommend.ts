@@ -4,6 +4,7 @@ import { getProductById } from "@/lib/data/products";
 import { getMerchantById } from "@/lib/data/merchants";
 import { getUseCaseById } from "@/lib/data/useCases";
 import { getVehicleById } from "@/lib/data/vehicles";
+import { getVariantsForGeneration } from "@/lib/data/variants";
 import { INSTALLATION_TYPE_LABELS } from "@/lib/types";
 import type {
   Product,
@@ -35,14 +36,26 @@ function isNonDrill(product: Product): boolean {
 /**
  * Hard requirements every recommendation must pass, independent of ranking
  * preference: the fitment itself must be manufacturer-verified (we never
- * recommend an unverified guess), and the product must be suited to the
- * requested use case.
+ * recommend an unverified guess), the product must be suited to the
+ * requested use case, and — if the fitment is scoped to a specific vehicle
+ * configuration (e.g. a cab-specific truck rack) — the requested variant
+ * must match exactly.
+ *
+ * Variant matching is a binary eligibility gate, computed here before any
+ * scoring, exactly like the verified-fit and use-case checks — never a
+ * scoring-time weight, never a "closest" or default variant. A fitment
+ * with no `variantId` applies to every variant of its generation (or the
+ * generation has none at all, e.g. every 4Runner fitment today) and is
+ * always eligible regardless of what `variantId` was requested.
  */
 export function isEligibleCandidate(
   candidate: Candidate,
-  useCase: RecommendationRequest["useCase"]
+  useCase: RecommendationRequest["useCase"],
+  variantId?: RecommendationRequest["variantId"]
 ): boolean {
+  const variantMatches = candidate.fitment.variantId == null || candidate.fitment.variantId === variantId;
   return (
+    variantMatches &&
     candidate.fitment.verificationStatus === "verified" &&
     candidate.product.useCases.includes(useCase)
   );
@@ -255,15 +268,17 @@ export function recommendRacks(request: RecommendationRequest): RecommendationRe
     return [{ product, merchant, fitment, generation }];
   });
 
-  const eligible = allCandidates.filter((c) => isEligibleCandidate(c, request.useCase));
+  const eligible = allCandidates.filter((c) => isEligibleCandidate(c, request.useCase, request.variantId));
   const lengthFiltered = eligible.filter((c) => matchesLengthPreference(c.product, request.preference));
   const sorted = sortForPreference(lengthFiltered, request.preference);
 
   if (sorted.length === 0) {
     const vehicle = getVehicleById(request.vehicleId);
     const vehicleLabel = vehicle ? `${vehicle.make} ${vehicle.model}` : "vehicle";
-    const note =
-      request.preference === "smaller-three-quarter"
+    const needsVariant = request.variantId == null && getVariantsForGeneration(generation.id).length > 0;
+    const note = needsVariant
+      ? `Select your vehicle configuration to see verified fits for the ${generation.name} ${vehicleLabel} (${generation.yearStart}–${generation.yearEnd}).`
+      : request.preference === "smaller-three-quarter"
         ? `No verified 3/4-length rack is published yet for the ${generation.name} ${vehicleLabel} (${generation.yearStart}–${generation.yearEnd}). Try "Best overall" or "Maximum capacity" for full-length options.`
         : `No verified roof rack matches this combination yet for the ${generation.name} ${vehicleLabel} (${generation.yearStart}–${generation.yearEnd}).`;
     return { generation, recommendations: [], note };

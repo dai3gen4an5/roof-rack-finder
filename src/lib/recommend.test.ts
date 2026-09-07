@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { bestOverallScore, isEligibleCandidate, recommendRacks } from "@/lib/recommend";
 import type { Candidate } from "@/lib/recommend";
+import { getVariantsForGeneration } from "@/lib/data/variants";
 import type { Fitment, Product } from "@/lib/types";
 
 const VEHICLE_ID = "toyota-4runner";
@@ -218,6 +219,95 @@ describe("isEligibleCandidate - verified fit is mandatory", () => {
 
   it("rejects a verified fitment for an unsupported use case", () => {
     expect(isEligibleCandidate(candidate(), "kayak-surf")).toBe(false);
+  });
+});
+
+describe("isEligibleCandidate - variant matching (synthetic fixtures, no real vehicle data)", () => {
+  // Generic "variant-a" / "variant-b" labels deliberately — this mechanism
+  // must work for any future vehicle's configuration axis (cab type, door
+  // count, etc.), not just a specific one, so the tests don't name any.
+  const baseProduct: Product = {
+    id: "test-product",
+    name: "Test Rack",
+    merchantId: "prinsu",
+    rackLength: "full",
+    installationType: "bolt-on-non-drill",
+    dynamicCapacityLbs: 500,
+    staticCapacityLbs: 900,
+    referencePrice: { min: 500, max: 500, currency: "USD" },
+    salePrice: null,
+    priceVerifiedAt: "2026-09-04",
+    useCases: ["overlanding"],
+    outboundUrl: "https://example.com",
+    affiliateUrl: null,
+    sourceUrl: "https://example.com",
+    verificationStatus: "verified",
+    lastVerifiedDate: "2026-09-04",
+  };
+  const baseFitment: Fitment = {
+    id: "test-fitment",
+    productId: "test-product",
+    generationId: "test-generation",
+    sourceUrl: "https://example.com",
+    verificationStatus: "verified",
+    lastVerifiedDate: "2026-09-04",
+  };
+  const baseGeneration = {
+    id: "test-generation",
+    vehicleId: "test-vehicle",
+    name: "Test Generation",
+    yearStart: 2020,
+    yearEnd: 2025,
+  };
+
+  function candidate(fitmentOverrides: Partial<Fitment> = {}): Candidate {
+    return {
+      product: baseProduct,
+      merchant: { id: "prinsu", name: "Prinsu", websiteUrl: "https://prinsu.com" },
+      fitment: { ...baseFitment, ...fitmentOverrides },
+      generation: baseGeneration,
+    };
+  }
+
+  it("includes a fitment scoped to variant-a when variant-a is requested", () => {
+    expect(isEligibleCandidate(candidate({ variantId: "variant-a" }), "overlanding", "variant-a")).toBe(
+      true
+    );
+  });
+
+  it("excludes a fitment scoped to variant-a when variant-b is requested", () => {
+    expect(isEligibleCandidate(candidate({ variantId: "variant-a" }), "overlanding", "variant-b")).toBe(
+      false
+    );
+  });
+
+  it("excludes a variant-scoped fitment when no variant is requested at all", () => {
+    expect(isEligibleCandidate(candidate({ variantId: "variant-a" }), "overlanding", undefined)).toBe(
+      false
+    );
+  });
+
+  it("excludes a variant-scoped fitment when an unknown/stale variant id is requested", () => {
+    expect(
+      isEligibleCandidate(candidate({ variantId: "variant-a" }), "overlanding", "variant-does-not-exist")
+    ).toBe(false);
+  });
+
+  it("includes a fitment with no variantId regardless of which variant (or none) is requested", () => {
+    // variantId omitted entirely (undefined) — the default shape for every
+    // existing 4Runner fitment today.
+    expect(isEligibleCandidate(candidate(), "overlanding", undefined)).toBe(true);
+    expect(isEligibleCandidate(candidate(), "overlanding", "variant-a")).toBe(true);
+    expect(isEligibleCandidate(candidate(), "overlanding", "variant-b")).toBe(true);
+    // variantId explicitly null — same meaning as omitted.
+    expect(isEligibleCandidate(candidate({ variantId: null }), "overlanding", "variant-a")).toBe(true);
+  });
+});
+
+describe("getVariantsForGeneration - 4Runner has no configuration axis today", () => {
+  it("returns an empty array for both existing 4Runner generations", () => {
+    expect(getVariantsForGeneration("4runner-5th-gen")).toEqual([]);
+    expect(getVariantsForGeneration("4runner-6th-gen")).toEqual([]);
   });
 });
 
