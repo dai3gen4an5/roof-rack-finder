@@ -79,12 +79,18 @@ export function FinderWizard({
   return (
     <div className="border border-line bg-paper p-6 sm:p-8">
       {step === "generation" && (
-        <StepShell step={stepNumber} totalSteps={totalSteps} title="Choose your 4Runner" subtitle="Which generation is yours?">
+        <StepShell
+          step={stepNumber}
+          totalSteps={totalSteps}
+          title={`Choose your ${vehicleLabel}`}
+          subtitle="Which generation is yours?"
+        >
           <div className="flex flex-col gap-3 sm:flex-row">
             {generations.map((g) => (
               <GenerationOption
                 key={g.id}
                 generation={g}
+                vehicleLabel={vehicleLabel}
                 onSelect={() => {
                   setGeneration(g);
                   setStep("year");

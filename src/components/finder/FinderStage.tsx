@@ -19,7 +19,7 @@ export function FinderStage({
   return (
     <div className="relative min-h-[720px] w-full overflow-hidden">
       <FinderStageMedia
-        alt="Toyota 4Runner with roof rack overlooking a mountain valley"
+        alt={`${vehicleLabel} with roof rack overlooking a mountain valley`}
         className="absolute inset-0 h-full w-full"
       />
       <div className="absolute inset-0 bg-gradient-to-r from-paper via-paper/70 to-transparent" />

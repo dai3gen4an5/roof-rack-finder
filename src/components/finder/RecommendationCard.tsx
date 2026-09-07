@@ -39,12 +39,13 @@ export function RecommendationCard({
   // the whole media column is omitted rather than reserved. The day a real
   // asset is wired into src/lib/media.ts, this brings the column back
   // automatically on every card, no layout change needed.
-  const hasMedia = hasPhotoAsset(getProductPhotoAssetKey(product.name));
+  const hasMedia = hasPhotoAsset(getProductPhotoAssetKey(product.id));
 
   return (
     <article className={`flex flex-col border bg-paper sm:flex-row ${isPrimary ? "border-ink" : "border-line"}`}>
       {hasMedia && (
         <ProductMedia
+          productId={product.id}
           productName={product.name}
           className={`shrink-0 ${isPrimary ? "aspect-square sm:w-72" : "aspect-square sm:w-48"}`}
         />

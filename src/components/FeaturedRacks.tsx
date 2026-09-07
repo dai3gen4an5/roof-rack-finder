@@ -5,9 +5,11 @@ import { RecommendationCard } from "@/components/finder/RecommendationCard";
 /** A no-finder-required preview of real, verified racks for site visitors
  * who haven't run the finder yet. Badges are genuinely spec-derived
  * (lowest price / highest capacity within this pair) — never fabricated
- * popularity or ratings. */
-export function FeaturedRacks() {
-  const generation = getGenerationById("4runner-6th-gen");
+ * popularity or ratings. Defaults to the current 4Runner 6th Gen so every
+ * existing call site keeps today's behavior unchanged; pass `generationId`
+ * to feature a different generation/vehicle elsewhere. */
+export function FeaturedRacks({ generationId = "4runner-6th-gen" }: { generationId?: string }) {
+  const generation = getGenerationById(generationId);
   if (!generation) return null;
 
   const comparison = compareFullLengthOptions(generation);

@@ -92,7 +92,7 @@ export default async function YearPage({ params }: { params: Promise<{ year: str
       {/* HERO */}
       <section className="relative h-[64vh] min-h-[440px] w-full overflow-hidden">
         <VehicleGenerationMedia
-          generationId={generation.id as "4runner-5th-gen" | "4runner-6th-gen"}
+          generationId={generation.id}
           alt={`${generation.name} Toyota 4Runner with roof rack`}
           className="h-full w-full"
           priority

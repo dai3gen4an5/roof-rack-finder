@@ -3,6 +3,7 @@ import { getFitmentsForGeneration } from "@/lib/data/fitments";
 import { getProductById } from "@/lib/data/products";
 import { getMerchantById } from "@/lib/data/merchants";
 import { getUseCaseById } from "@/lib/data/useCases";
+import { getVehicleById } from "@/lib/data/vehicles";
 import { INSTALLATION_TYPE_LABELS } from "@/lib/types";
 import type {
   Product,
@@ -259,10 +260,12 @@ export function recommendRacks(request: RecommendationRequest): RecommendationRe
   const sorted = sortForPreference(lengthFiltered, request.preference);
 
   if (sorted.length === 0) {
+    const vehicle = getVehicleById(request.vehicleId);
+    const vehicleLabel = vehicle ? `${vehicle.make} ${vehicle.model}` : "vehicle";
     const note =
       request.preference === "smaller-three-quarter"
-        ? `No verified 3/4-length rack is published yet for the ${generation.name} 4Runner (${generation.yearStart}–${generation.yearEnd}). Try "Best overall" or "Maximum capacity" for full-length options.`
-        : `No verified roof rack matches this combination yet for the ${generation.name} 4Runner (${generation.yearStart}–${generation.yearEnd}).`;
+        ? `No verified 3/4-length rack is published yet for the ${generation.name} ${vehicleLabel} (${generation.yearStart}–${generation.yearEnd}). Try "Best overall" or "Maximum capacity" for full-length options.`
+        : `No verified roof rack matches this combination yet for the ${generation.name} ${vehicleLabel} (${generation.yearStart}–${generation.yearEnd}).`;
     return { generation, recommendations: [], note };
   }
 

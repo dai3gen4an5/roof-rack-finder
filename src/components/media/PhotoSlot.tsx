@@ -24,7 +24,10 @@ export function PhotoSlot({
   imgClassName,
   objectPositionClassName = "object-center",
 }: {
-  assetKey: PhotoAssetKey;
+  /** Omit (or pass `undefined`) when the caller has no valid asset key for
+   * this subject (e.g. an unmapped generation/product ID) — renders the
+   * same safe placeholder as a mapped key whose asset is still `null`. */
+  assetKey?: PhotoAssetKey;
   alt: string;
   priority?: boolean;
   sizes?: string;
@@ -39,7 +42,7 @@ export function PhotoSlot({
    * of frame on narrow viewports. */
   objectPositionClassName?: string;
 }) {
-  const src = PHOTO_ASSETS[assetKey];
+  const src = assetKey ? PHOTO_ASSETS[assetKey] : null;
 
   return (
     <div className={`relative overflow-hidden bg-warmgray ${className ?? ""}`}>

@@ -30,13 +30,41 @@ export const PHOTO_ASSETS: Record<PhotoAssetKey, string | null> = {
 };
 
 /**
- * Maps a product to its product-photography asset key. Name-based (not a
- * hardcoded id list) so any future "Pro" line product picks up the same
- * asset key automatically. Both keys currently resolve to `null` in
- * `PHOTO_ASSETS` pending manufacturer licensing — see ProductMedia.
+ * Explicit generation ID -> photo asset key lookup. Deliberately a plain
+ * object literal, not a heuristic (e.g. "starts with a number" or "ends in
+ * -gen") — an unmapped generation ID (a future vehicle's generation, e.g.
+ * "tacoma-3rd-gen") returns `undefined` rather than guessing, so callers
+ * fall back to PhotoSlot's normal no-photo placeholder instead of silently
+ * borrowing a different vehicle's photo. Add a line here, in this file
+ * only, when a new generation gets real photography.
  */
-export function getProductPhotoAssetKey(productName: string): PhotoAssetKey {
-  return productName.toLowerCase().includes("pro") ? "product-prinsu-pro" : "product-prinsu-original";
+const GENERATION_PHOTO_ASSET_KEYS: Record<string, PhotoAssetKey | undefined> = {
+  "4runner-5th-gen": "generation-5th",
+  "4runner-6th-gen": "generation-6th",
+};
+
+export function getGenerationPhotoAssetKey(generationId: string): PhotoAssetKey | undefined {
+  return GENERATION_PHOTO_ASSET_KEYS[generationId];
+}
+
+/**
+ * Explicit product ID -> photo asset key lookup — replaces an earlier
+ * version that guessed the asset from a "pro" substring in the product
+ * name, which would have silently mapped any future non-Prinsu "Pro" line
+ * product onto Prinsu's photo. Keyed by product ID (stable, unique),
+ * never by name or merchant alone. An unmapped product ID returns
+ * `undefined`, not a same-brand or default asset.
+ */
+const PRODUCT_PHOTO_ASSET_KEYS: Record<string, PhotoAssetKey | undefined> = {
+  "prinsu-4runner-5th-gen-full-non-drill": "product-prinsu-original",
+  "prinsu-4runner-5th-gen-three-quarter": "product-prinsu-original",
+  "prinsu-4runner-5th-gen-pro": "product-prinsu-pro",
+  "prinsu-4runner-6th-gen-original": "product-prinsu-original",
+  "prinsu-4runner-6th-gen-pro": "product-prinsu-pro",
+};
+
+export function getProductPhotoAssetKey(productId: string): PhotoAssetKey | undefined {
+  return PRODUCT_PHOTO_ASSET_KEYS[productId];
 }
 
 /**
@@ -44,8 +72,10 @@ export function getProductPhotoAssetKey(productName: string): PhotoAssetKey {
  * media column (e.g. a product comparison card) should check this and drop
  * the column entirely when false, rather than reserving space for a photo
  * that isn't coming — an empty aspect-ratio panel reads as a broken image,
- * not as "photo pending."
+ * not as "photo pending." Accepts `undefined` so an unmapped generation/
+ * product ID (see above) can be passed straight through without callers
+ * needing a separate null-check.
  */
-export function hasPhotoAsset(key: PhotoAssetKey): boolean {
-  return PHOTO_ASSETS[key] != null;
+export function hasPhotoAsset(key: PhotoAssetKey | undefined): boolean {
+  return key != null && PHOTO_ASSETS[key] != null;
 }

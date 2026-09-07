@@ -14,7 +14,7 @@ export function GenerationFeature({ generation, href }: { generation: Generation
       <Link href={href} className="group block">
         <div className="relative h-[70vh] min-h-[420px] w-full overflow-hidden">
           <VehicleGenerationMedia
-            generationId={generation.id as "4runner-5th-gen" | "4runner-6th-gen"}
+            generationId={generation.id}
             alt={`${generation.name} Toyota 4Runner with roof rack`}
             className="h-full w-full"
           />

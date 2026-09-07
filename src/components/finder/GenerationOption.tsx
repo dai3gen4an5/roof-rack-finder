@@ -6,10 +6,13 @@ import { VehicleGenerationMedia } from "@/components/media/VehicleGenerationMedi
  * enough to keep the UI's attention on the choice, not the photo. */
 export function GenerationOption({
   generation,
+  vehicleLabel,
   onSelect,
   className,
 }: {
   generation: Generation;
+  /** Used only for the photo's alt text, e.g. "Toyota 4Runner". */
+  vehicleLabel: string;
   onSelect: () => void;
   className?: string;
 }) {
@@ -21,8 +24,8 @@ export function GenerationOption({
     >
       <div className="relative h-20 w-20 shrink-0 overflow-hidden">
         <VehicleGenerationMedia
-          generationId={generation.id as "4runner-5th-gen" | "4runner-6th-gen"}
-          alt={`${generation.name} Toyota 4Runner`}
+          generationId={generation.id}
+          alt={`${generation.name} ${vehicleLabel}`}
           className="h-full w-full"
         />
       </div>
