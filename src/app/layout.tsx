@@ -37,12 +37,24 @@ export const metadata: Metadata = {
   },
 };
 
+// Impact.com Media Property ownership verification. Impact's crawler reads the
+// non-standard `value` attribute (not `content`), which the Next.js Metadata
+// API cannot emit — so this one tag is rendered raw. Do not change the name or
+// the value. Spread + Record cast because `value` is not in React's <meta> type.
+const IMPACT_SITE_VERIFICATION: Record<string, string> = {
+  name: "impact-site-verification",
+  value: "0f303e81-3245-43e7-8735-d7c604d2202b",
+};
+
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} ${interTight.variable} h-full antialiased`}
     >
+      <head>
+        <meta {...IMPACT_SITE_VERIFICATION} />
+      </head>
       <body className="flex min-h-full flex-col bg-paper text-ink">
         <SiteHeader />
         <main className="flex-1">{children}</main>
