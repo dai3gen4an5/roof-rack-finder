@@ -8,7 +8,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     const vehiclePath = `/${vehicle.slug[0]}/${vehicle.slug[1]}`;
     const yearEntries: MetadataRoute.Sitemap = getYearsForVehicle(vehicle.id).map((year) => ({
       url: `${SITE_URL}${vehiclePath}/${year}`,
-      lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 0.7,
     }));
@@ -16,7 +15,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     return [
       {
         url: `${SITE_URL}${vehiclePath}`,
-        lastModified: new Date(),
         changeFrequency: "weekly",
         priority: 0.9,
       },
@@ -27,7 +25,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return [
     {
       url: `${SITE_URL}/`,
-      lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 1,
     },
