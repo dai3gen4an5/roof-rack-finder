@@ -1,4 +1,4 @@
-import type { Generation, Vehicle } from "@/lib/types";
+import type { Generation, Vehicle } from "@/domains/roof-rack/types";
 
 export interface FaqEntry {
   question: string;

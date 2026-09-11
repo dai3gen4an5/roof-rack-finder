@@ -1,4 +1,4 @@
-import type { Variant } from "@/lib/types";
+import type { Variant } from "@/domains/roof-rack/types";
 
 /**
  * Flat, hairline-bordered choice for the finder's vehicle-configuration

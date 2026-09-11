@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/site";
-import { getYearsForVehicle } from "@/lib/data/generations";
-import { vehicles } from "@/lib/data/vehicles";
+import { getYearsForVehicle } from "@/domains/roof-rack/data/generations";
+import { vehicles } from "@/domains/roof-rack/data/vehicles";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const vehicleEntries: MetadataRoute.Sitemap = vehicles.flatMap((vehicle) => {

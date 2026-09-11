@@ -1,4 +1,4 @@
-import type { Variant } from "@/lib/types";
+import type { Variant } from "@/domains/roof-rack/types";
 
 /**
  * Configuration-axis rows (e.g. cab type on a truck), scoped by generation.
@@ -10,7 +10,7 @@ import type { Variant } from "@/lib/types";
  * configuration fact, not a rack-fitment claim, so listing both as
  * selectable options here is not "guessing fitment." What IS a fitment
  * claim is which `Fitment` rows reference a `variantId` — see
- * src/lib/data/fitments.ts. As of this data's last check: the Access Rack
+ * src/domains/roof-rack/data/fitments.ts. As of this data's last check: the Access Rack
  * (Prinsu) is Access Cab-specific per its own product page; the "Cab Rack"
  * (Original/Pro) is Double Cab-specific per Prinsu's official buying guide
  * (a separate first-party page, not the product pages themselves, which

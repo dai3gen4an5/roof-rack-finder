@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { bestOverallScore, isEligibleCandidate, recommendRacks } from "@/lib/recommend";
-import type { Candidate } from "@/lib/recommend";
-import { getGenerationForYear } from "@/lib/data/generations";
-import { getVariantsForGeneration } from "@/lib/data/variants";
-import type { Fitment, Product } from "@/lib/types";
+import { bestOverallScore, isEligibleCandidate, recommendRacks } from "@/domains/roof-rack/recommend";
+import type { Candidate } from "@/domains/roof-rack/recommend";
+import { getGenerationForYear } from "@/domains/roof-rack/data/generations";
+import { getVariantsForGeneration } from "@/domains/roof-rack/data/variants";
+import type { Fitment, Product } from "@/domains/roof-rack/types";
 
 const VEHICLE_ID = "toyota-4runner";
 const TACOMA_VEHICLE_ID = "toyota-tacoma";

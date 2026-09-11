@@ -1,4 +1,4 @@
-import type { Generation } from "@/lib/types";
+import type { Generation } from "@/domains/roof-rack/types";
 import { VehicleGenerationMedia } from "@/components/media/VehicleGenerationMedia";
 
 /** Flat, hairline-bordered generation choice for the finder's first step —

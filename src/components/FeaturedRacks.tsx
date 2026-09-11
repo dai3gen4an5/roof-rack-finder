@@ -1,5 +1,5 @@
-import { getGenerationById } from "@/lib/data/generations";
-import { compareFullLengthOptions } from "@/lib/generationProducts";
+import { getGenerationById } from "@/domains/roof-rack/data/generations";
+import { compareFullLengthOptions } from "@/domains/roof-rack/generationProducts";
 import { RecommendationCard } from "@/components/finder/RecommendationCard";
 
 /** A no-finder-required preview of real, verified racks for site visitors

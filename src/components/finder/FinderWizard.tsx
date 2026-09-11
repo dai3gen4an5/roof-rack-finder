@@ -2,12 +2,12 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { getGenerationForYear, getGenerationsForVehicle } from "@/lib/data/generations";
-import { getVariantsForGeneration } from "@/lib/data/variants";
-import { useCases } from "@/lib/data/useCases";
-import { preferences } from "@/lib/data/preferences";
-import { recommendRacks } from "@/lib/recommend";
-import type { Generation, PreferenceId, UseCaseId, Variant } from "@/lib/types";
+import { getGenerationForYear, getGenerationsForVehicle } from "@/domains/roof-rack/data/generations";
+import { getVariantsForGeneration } from "@/domains/roof-rack/data/variants";
+import { useCases } from "@/domains/roof-rack/data/useCases";
+import { preferences } from "@/domains/roof-rack/data/preferences";
+import { recommendRacks } from "@/domains/roof-rack/recommend";
+import type { Generation, PreferenceId, UseCaseId, Variant } from "@/domains/roof-rack/types";
 import { StepShell } from "@/components/finder/StepShell";
 import { OptionGrid } from "@/components/finder/OptionGrid";
 import { RecommendationCard } from "@/components/finder/RecommendationCard";

@@ -1,12 +1,34 @@
 /**
- * Core domain types for RackFit.
+ * Roof Rack domain types for RackFit.
  *
- * These are intentionally generic (not 4Runner-specific) so the same model
- * can later cover other vehicles (Tacoma, Subaru, Jeep, ...) and other
- * manufacturers without a redesign.
+ * These are the domain's own, readable vocabulary (Vehicle / Generation /
+ * Variant / Fitment / rack-specific Product attributes) — NOT a
+ * field-for-field rename onto `mmfe/types.ts`'s Entity / EntityScope /
+ * Variant / Fitment. That's a deliberate Phase 1 choice: `Vehicle.make`/
+ * `.model` and `Generation.vehicleId`/`.yearStart`/`.yearEnd` (etc.) read
+ * naturally here and are used throughout this domain's data, components,
+ * and tests, so they're kept exactly as they were rather than mechanically
+ * renamed to match Core's generic field names. See the Phase 1 report for
+ * the full reasoning.
+ *
+ * `Merchant`, `VerificationStatus`, and `PriceRange` ARE identical in shape
+ * to their Core counterparts, so those are genuine re-exports, not
+ * redeclarations. `Product` is built directly on Core's `Product<TAttrs>` —
+ * the one type where doing so costs zero renames (see below).
  */
+import type {
+  Merchant as CoreMerchant,
+  PriceRange as CorePriceRange,
+  Product as CoreProduct,
+  VerificationStatus as CoreVerificationStatus,
+} from "@/mmfe/types";
 
-/** A vehicle nameplate, e.g. Toyota 4Runner. */
+export type Merchant = CoreMerchant;
+export type VerificationStatus = CoreVerificationStatus;
+export type PriceRange = CorePriceRange;
+
+/** A vehicle nameplate, e.g. Toyota 4Runner. The domain-native counterpart
+ * of `mmfe/types.ts`'s `Entity`. */
 export interface Vehicle {
   id: string;
   make: string;
@@ -15,7 +37,11 @@ export interface Vehicle {
   slug: [string, string];
 }
 
-/** A model-year range that shares the same body/platform, e.g. "5th Gen". */
+/** A model-year range that shares the same body/platform, e.g. "5th Gen".
+ * The domain-native counterpart of `mmfe/types.ts`'s `EntityScope` — this is
+ * exactly the kind of domain that DOES have a natural numeric range, so it
+ * keeps `yearStart`/`yearEnd` as real fields rather than routing through
+ * Core's (deliberately range-less) `EntityScope`. */
 export interface Generation {
   id: string;
   vehicleId: Vehicle["id"];
@@ -24,19 +50,13 @@ export interface Generation {
   yearEnd: number;
 }
 
-/** The company selling/manufacturing a rack. */
-export interface Merchant {
-  id: string;
-  name: string;
-  websiteUrl: string;
-}
-
 /**
  * A configuration axis within a generation that fitment can depend on
  * independent of model year — e.g. cab type on a truck. Not every vehicle
  * has any; today's Toyota 4Runner data has none at all (see
- * `src/lib/data/variants.ts`). Scoped to a generation the same way
- * `Fitment` is, since which variants exist can change across a redesign.
+ * `data/variants.ts`). Scoped to a generation the same way `Fitment` is,
+ * since which variants exist can change across a redesign. The
+ * domain-native counterpart of `mmfe/types.ts`'s `Variant`.
  */
 export interface Variant {
   id: string;
@@ -56,8 +76,6 @@ export const INSTALLATION_TYPE_LABELS: Record<InstallationType, string> = {
   "bolt-on-non-drill": "Bolt-on (non-drill)",
   drilled: "Drilled installation",
 };
-
-export type VerificationStatus = "verified" | "unverified";
 
 export type UseCaseId =
   | "rooftop-tent"
@@ -84,61 +102,46 @@ export interface Preference {
   description: string;
 }
 
-/** A price range. Racks are sometimes sold across a small range (e.g. by color/option). */
-export interface PriceRange {
-  min: number;
-  max: number;
-  currency: "USD";
-}
-
 /**
- * A product a merchant sells. Fit information is stored separately in
- * {@link Fitment} records so the same product can (in principle) be linked
- * to more than one vehicle/generation.
+ * The roof-rack-specific attributes layered onto `mmfe/types.ts`'s generic
+ * `Product<TAttrs>` commerce/trust fields. This is the `TAttrs` of this
+ * domain's `Product` below — a named, typed interface, never an untyped bag.
  */
-export interface Product {
-  id: string;
-  name: string;
-  merchantId: Merchant["id"];
+export interface RoofRackProductAttributes {
   rackLength: RackLength;
   installationType: InstallationType;
   /** Manufacturer-stated dynamic (moving/driving) load capacity in lb, if published. */
   dynamicCapacityLbs: number | null;
   /** Manufacturer-stated static (stationary, e.g. parked camping) load capacity in lb, if published. */
   staticCapacityLbs: number | null;
-  /**
-   * The manufacturer's regular/list price — NOT a temporary sale price.
-   * This is what ranking math and "reference price" display use, so a
-   * short-lived promo never gets baked in as if it were the normal price.
-   */
-  referencePrice: PriceRange;
-  /**
-   * An actively-confirmed current sale price, only when one is genuinely
-   * in effect. Leave `null` rather than hardcoding a promo we can't keep
-   * current — a stale "sale" price baked into source is worse than none.
-   * When present, the UI must present it as temporary, not as the price.
-   */
-  salePrice: PriceRange | null;
-  /** ISO date (YYYY-MM-DD) `referencePrice`/`salePrice` were last checked against `sourceUrl`. */
-  priceVerifiedAt: string;
   /** Use cases this product is generally suited for. */
   useCases: UseCaseId[];
-  /** Current outbound link. This is a normal manufacturer/retailer link today;
-   * it can be swapped for an affiliate link later without changing callers. */
-  outboundUrl: string;
-  /** Affiliate tracking link, once a program exists. Null until then — never fabricate one. */
-  affiliateUrl: string | null;
-  /** Where the product's specs (capacity, price, install type) were sourced from. */
-  sourceUrl: string;
-  verificationStatus: VerificationStatus;
-  /** ISO date (YYYY-MM-DD) the capacity/installation specs above were last checked against the source. */
-  lastVerifiedDate: string;
 }
+
+/**
+ * A product a merchant sells. Fit information is stored separately in
+ * {@link Fitment} records so the same product can (in principle) be linked
+ * to more than one vehicle/generation.
+ *
+ * `CoreProduct<RoofRackProductAttributes>` is an intersection type (Core's
+ * commerce/trust fields & this domain's rack fields), so every field below
+ * stays flat and top-level exactly as before — `product.rackLength`,
+ * `product.referencePrice`, etc. — with zero changes needed anywhere this
+ * type is consumed (components, scoring, the data literals in
+ * `data/products.ts`).
+ */
+export type Product = CoreProduct<RoofRackProductAttributes>;
 
 /**
  * Confirms that a product fits a specific vehicle generation. Kept separate
  * from Product so fit claims always carry their own source/verification
- * trail, distinct from the product's general spec sourcing.
+ * trail, distinct from the product's general spec sourcing. The
+ * domain-native counterpart of `mmfe/types.ts`'s `Fitment` — this domain
+ * needs a numeric (year) narrowing, which Core's `Fitment` deliberately
+ * does not carry, so those two optional fields live here instead of on a
+ * shared type. `isEligibleCandidate` (see `recommend.ts`) translates them
+ * into Core's `NumericRangeConstraint` when calling
+ * `mmfe/recommend/eligibility`'s range check.
  */
 export interface Fitment {
   id: string;
@@ -171,7 +174,9 @@ export interface Fitment {
   lastVerifiedDate: string;
 }
 
-/** A recommended product bundled with the fitment record that qualified it. */
+/** A recommended product bundled with the fitment record that qualified it.
+ * The domain-native counterpart of `mmfe/types.ts`'s `Recommendation` (which
+ * uses the generic field name `scope` in place of `generation`). */
 export interface Recommendation {
   product: Product;
   merchant: Merchant;

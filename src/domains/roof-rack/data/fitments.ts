@@ -1,4 +1,4 @@
-import type { Fitment } from "@/lib/types";
+import type { Fitment } from "@/domains/roof-rack/types";
 
 /**
  * Each fitment record is the manufacturer's own statement that a given

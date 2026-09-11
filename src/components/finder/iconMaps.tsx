@@ -1,5 +1,5 @@
 import type { ComponentType, SVGProps } from "react";
-import type { PreferenceId, UseCaseId } from "@/lib/types";
+import type { PreferenceId, UseCaseId } from "@/domains/roof-rack/types";
 import {
   BikeIcon,
   CargoBoxIcon,

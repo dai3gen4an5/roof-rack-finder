@@ -1,25 +1,33 @@
-import { getGenerationForYear } from "@/lib/data/generations";
-import { getFitmentsForGeneration } from "@/lib/data/fitments";
-import { getProductById } from "@/lib/data/products";
-import { getMerchantById } from "@/lib/data/merchants";
-import { getUseCaseById } from "@/lib/data/useCases";
-import { getVehicleById } from "@/lib/data/vehicles";
-import { getVariantsForGeneration } from "@/lib/data/variants";
-import { INSTALLATION_TYPE_LABELS } from "@/lib/types";
+import { isEligibleFitment } from "@/mmfe/recommend/eligibility";
+import { getGenerationForYear } from "@/domains/roof-rack/data/generations";
+import { getFitmentsForGeneration } from "@/domains/roof-rack/data/fitments";
+import { getProductById } from "@/domains/roof-rack/data/products";
+import { getMerchantById } from "@/domains/roof-rack/data/merchants";
+import { getUseCaseById } from "@/domains/roof-rack/data/useCases";
+import { getVehicleById } from "@/domains/roof-rack/data/vehicles";
+import { getVariantsForGeneration } from "@/domains/roof-rack/data/variants";
+import { INSTALLATION_TYPE_LABELS } from "@/domains/roof-rack/types";
 import type {
   Product,
   Recommendation,
   RecommendationRequest,
   RecommendationResult,
-} from "@/lib/types";
+} from "@/domains/roof-rack/types";
 
 /**
  * Pure, data-driven recommendation logic. Nothing here guesses fitment —
  * it only ranks the fitments already declared as manufacturer-verified in
- * src/lib/data, and only ever recommends a fitment that is itself verified.
- * Ranking rules are deliberately simple, rule-based (no learned weights,
- * no per-product-authored copy) and documented so they can be explained to
- * users (see /toyota/4runner#methodology) and asserted on in tests.
+ * src/domains/roof-rack/data, and only ever recommends a fitment that is
+ * itself verified. Ranking rules are deliberately simple, rule-based (no
+ * learned weights, no per-product-authored copy) and documented so they can
+ * be explained to users (see /toyota/4runner#methodology) and asserted on
+ * in tests.
+ *
+ * The verified/variant/year-range eligibility gates below are composed from
+ * `mmfe/recommend/eligibility.ts` — the domain-agnostic mechanism shared by
+ * every MMFE finder. Everything past that gate (rack length, capacity,
+ * installation type, scoring weights, "why it matches" copy) is roof-rack
+ * specific and stays here.
  */
 
 /** A candidate before preference-specific ranking/explanation is applied. */
@@ -34,35 +42,25 @@ function isNonDrill(product: Product): boolean {
 }
 
 /**
- * Whether `year` falls within a fitment's own narrowed year range, if it
- * has one. Most fitments apply across their whole generation (both fields
- * omitted); some need a narrower range because the manufacturer's own
- * stated years don't line up with the generation boundary — see
- * `Fitment.yearStart`/`yearEnd` in types.ts.
- */
-function matchesFitmentYearRange(fitment: Candidate["fitment"], year: number): boolean {
-  const start = fitment.yearStart ?? -Infinity;
-  const end = fitment.yearEnd ?? Infinity;
-  return year >= start && year <= end;
-}
-
-/**
  * Hard requirements every recommendation must pass, independent of ranking
  * preference — checked in this order, all mandatory, none a scoring
  * weight:
  *   1. the requested year falls within the fitment's own year range, if
- *      it has one narrower than the generation (see matchesFitmentYearRange)
+ *      it has one narrower than the generation
  *   2. if the fitment is scoped to a specific vehicle configuration (e.g.
  *      a cab-specific truck rack), the requested variant matches exactly
  *   3. the fitment itself is manufacturer-verified (never an unverified guess)
  *   4. the product is suited to the requested use case
  *
- * Variant and year-range matching are both binary eligibility gates,
- * computed here before any scoring — never a "closest" or default variant,
- * never a partial-credit year match. A fitment with no `variantId` applies
- * to every variant of its generation (or the generation has none at all,
- * e.g. every 4Runner fitment today) and is always eligible regardless of
- * what `variantId` was requested.
+ * The first three are `mmfe/recommend/eligibility.ts`'s `isEligibleFitment`
+ * — domain-agnostic gates shared by every MMFE finder. Variant and
+ * year-range matching are both binary eligibility gates, computed before
+ * any scoring — never a "closest" or default variant, never a partial-credit
+ * year match. A fitment with no `variantId` applies to every variant of its
+ * generation (or the generation has none at all, e.g. every 4Runner fitment
+ * today) and is always eligible regardless of what `variantId` was
+ * requested. The fourth (use case) is roof-rack specific — a product's
+ * `useCases` tagging has no Core equivalent — so it's layered on here.
  */
 export function isEligibleCandidate(
   candidate: Candidate,
@@ -70,13 +68,14 @@ export function isEligibleCandidate(
   useCase: RecommendationRequest["useCase"],
   variantId?: RecommendationRequest["variantId"]
 ): boolean {
-  const yearMatches = matchesFitmentYearRange(candidate.fitment, year);
-  const variantMatches = candidate.fitment.variantId == null || candidate.fitment.variantId === variantId;
   return (
-    yearMatches &&
-    variantMatches &&
-    candidate.fitment.verificationStatus === "verified" &&
-    candidate.product.useCases.includes(useCase)
+    isEligibleFitment({
+      verificationStatus: candidate.fitment.verificationStatus,
+      fitmentVariantId: candidate.fitment.variantId,
+      requestedVariantId: variantId,
+      range: { min: candidate.fitment.yearStart, max: candidate.fitment.yearEnd },
+      point: year,
+    }) && candidate.product.useCases.includes(useCase)
   );
 }
 

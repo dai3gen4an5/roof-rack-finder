@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getGenerationsForVehicle } from "@/lib/data/generations";
+import { getGenerationsForVehicle } from "@/domains/roof-rack/data/generations";
 import { HeroMedia } from "@/components/media/HeroMedia";
 import { GenerationFeature } from "@/components/GenerationFeature";
 import { FinderStage } from "@/components/finder/FinderStage";

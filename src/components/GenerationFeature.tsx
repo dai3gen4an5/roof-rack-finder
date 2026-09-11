@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { Generation } from "@/lib/types";
+import type { Generation } from "@/domains/roof-rack/types";
 import { VehicleGenerationMedia } from "@/components/media/VehicleGenerationMedia";
 import { RevealOnScroll } from "@/components/media/RevealOnScroll";
 

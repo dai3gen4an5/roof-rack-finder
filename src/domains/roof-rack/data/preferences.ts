@@ -1,4 +1,4 @@
-import type { Preference } from "@/lib/types";
+import type { Preference } from "@/domains/roof-rack/types";
 
 export const preferences: Preference[] = [
   {

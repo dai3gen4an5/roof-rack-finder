@@ -1,4 +1,4 @@
-import type { Product } from "@/lib/types";
+import type { Product } from "@/domains/roof-rack/types";
 
 /**
  * All fields below (price, capacities, install type) were checked directly

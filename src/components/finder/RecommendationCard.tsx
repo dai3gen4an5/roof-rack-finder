@@ -1,10 +1,10 @@
-import { INSTALLATION_TYPE_LABELS } from "@/lib/types";
-import type { PreferenceId, PriceRange, Recommendation } from "@/lib/types";
+import { INSTALLATION_TYPE_LABELS } from "@/domains/roof-rack/types";
+import type { PreferenceId, PriceRange, Recommendation } from "@/domains/roof-rack/types";
 import { RankBadge, VerifiedFitBadge } from "@/components/finder/Badge";
 import { ProductMedia } from "@/components/media/ProductMedia";
 import { getProductPhotoAssetKey, hasPhotoAsset } from "@/lib/media";
-import { rankBadgeForPreference } from "@/lib/recommend";
-import { getVariantById } from "@/lib/data/variants";
+import { rankBadgeForPreference } from "@/domains/roof-rack/recommend";
+import { getVariantById } from "@/domains/roof-rack/data/variants";
 
 function formatPrice(price: PriceRange): string {
   const fmt = (n: number) =>

@@ -1,4 +1,4 @@
-import type { Generation } from "@/lib/types";
+import type { Generation } from "@/domains/roof-rack/types";
 
 export const generations: Generation[] = [
   {

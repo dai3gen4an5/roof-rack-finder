@@ -1,8 +1,8 @@
-import { getFitmentsForGeneration } from "@/lib/data/fitments";
-import { getProductById } from "@/lib/data/products";
-import { getMerchantById } from "@/lib/data/merchants";
-import { capacityLbs } from "@/lib/recommend";
-import type { Generation, Recommendation } from "@/lib/types";
+import { getFitmentsForGeneration } from "@/domains/roof-rack/data/fitments";
+import { getProductById } from "@/domains/roof-rack/data/products";
+import { getMerchantById } from "@/domains/roof-rack/data/merchants";
+import { capacityLbs } from "@/domains/roof-rack/recommend";
+import type { Generation, Recommendation } from "@/domains/roof-rack/types";
 
 /**
  * All manufacturer-verified products for a generation, independent of any

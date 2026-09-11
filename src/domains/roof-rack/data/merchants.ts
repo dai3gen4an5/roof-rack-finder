@@ -1,4 +1,4 @@
-import type { Merchant } from "@/lib/types";
+import type { Merchant } from "@/domains/roof-rack/types";
 
 export const merchants: Merchant[] = [
   {
