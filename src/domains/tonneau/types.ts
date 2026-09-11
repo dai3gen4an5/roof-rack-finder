@@ -157,15 +157,18 @@ export interface Recommendation {
 }
 
 /**
- * Deliberately small: only preferences that produce a genuinely different,
- * verifiable ranking with today's 6-product dataset. No "best-overall" yet
- * — this domain has no independently-verified secondary spec (Roof Rack
- * had manufacturer-stated load capacity; no comparable, consistently
- * published number was found across tonneau brands during Step 1/2
- * research), so a composite score would need invented weights. Add it once
- * a genuine differentiator is verified, not before.
+ * A hard filter on `Product.coverType`, not a ranking preference — kept
+ * deliberately separate from price, which is always a sort (see
+ * `recommendCovers`), never a filter. Phase 2 Step 3 originally combined
+ * these into one "preference" concept (`"lowest-price" | "hard-folding"`);
+ * Step 3A split them because they answer different questions ("which
+ * products should even be shown" vs. "what order should they appear in")
+ * and conflating them made `hard-folding` behave inconsistently with a
+ * genuine price-sort option. No "best-overall" — same reasoning as before
+ * (no independently-verified secondary spec exists yet across tonneau
+ * brands to build a composite score without inventing weights).
  */
-export type TonneauPreferenceId = "lowest-price" | "hard-folding";
+export type CoverTypeFilter = "any" | "hard-folding";
 
 export interface RecommendationRequest {
   truckId: Truck["id"];
@@ -174,12 +177,25 @@ export interface RecommendationRequest {
    * resolved generation has more than one bed length fitment (true for
    * every generation in this dataset) — never inferred or defaulted. */
   bedLengthId?: BedLength["id"];
-  preference: TonneauPreferenceId;
-  /** Whether the requester's truck has the factory Deck Rail System.
-   * `undefined` = unknown — never assumed true OR false. A product that
-   * requires the rail system is only ever excluded when the requester
-   * affirmatively said they don't have it (`false`); it's never excluded
-   * just because this wasn't asked. See `isEligibleCandidate`. */
+  /** `"any"` = no cover-type filtering (every verified, otherwise-eligible
+   * product); `"hard-folding"` = only `coverType === "hard-folding"`
+   * products. Results are always sorted by reference price ascending —
+   * there is no separate sort control in this MVP. */
+  coverTypeFilter: CoverTypeFilter;
+  /**
+   * Whether the requester's truck has the factory Deck Rail System —
+   * three distinct epistemic states, never collapsed into two:
+   *   - `true`  — confirmed present
+   *   - `false` — confirmed absent
+   *   - `undefined` — unconfirmed/unknown
+   * A product whose own verified fitment requires this system is eligible
+   * ONLY when this is explicitly `true`. Both `false` and `undefined`
+   * exclude it from the recommendation the same way — but the REQUEST
+   * itself still keeps them distinct (never coerced to a single boolean
+   * before reaching this type), so a caller (e.g. the Wizard) can still
+   * tell "confirmed absent" from "never asked/unsure" and word its UI
+   * accordingly. See `isEligibleCandidate` and `recommendCovers`'s
+   * `hiddenByUnconfirmedDeckRail`. */
   hasDeckRailSystem?: boolean;
 }
 
@@ -187,4 +203,11 @@ export interface RecommendationResult {
   generation: Generation | null;
   recommendations: Recommendation[];
   note: string | null;
+  /** True when at least one otherwise-eligible product was excluded ONLY
+   * because `hasDeckRailSystem` wasn't confirmed `true` (i.e. it would be
+   * eligible if the requester confirmed they have the Deck Rail System).
+   * Lets a caller show an explanatory note without parsing `note`'s text,
+   * and without conflating "confirmed absent" and "unconfirmed" the way a
+   * single boolean would. */
+  hiddenByUnconfirmedDeckRail: boolean;
 }

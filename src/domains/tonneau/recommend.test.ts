@@ -6,8 +6,17 @@ import type { Fitment, Product, Merchant, Generation } from "@/domains/tonneau/t
 // Integration-style: exercises the real seed data in data/*.ts, the same
 // way domains/roof-rack/recommend.test.ts does — not synthetic fixtures,
 // except in the "isEligibleCandidate - synthetic fixtures" block below,
-// which isolates edge cases (unverified, deck-rail-undefined) that aren't
-// naturally present in today's small verified dataset.
+// which isolates edge cases that aren't naturally present in today's small
+// verified dataset.
+//
+// Deck Rail re-audit (Step 3A) note for readers of this file: only
+// worksport-al3 and worksport-al4 carry `requiresDeckRailSystem: true` in
+// today's seed data — the four BAK products do not (their current source
+// describes bolt-on/clamp-on installation with no deck-rail prerequisite
+// stated; see data/products.ts). So `hasDeckRailSystem: false`/`undefined`
+// no longer empties every result the way it did before the re-audit — it
+// now excludes only the Worksport products from an otherwise-eligible
+// group, which is exactly what several tests below check for.
 
 describe("recommendCovers - generation matching by year", () => {
   it("2010 resolves to 2nd Gen only", () => {
@@ -15,7 +24,8 @@ describe("recommendCovers - generation matching by year", () => {
       truckId: "toyota-tacoma",
       year: 2010,
       bedLengthId: "tacoma-2g-5ft",
-      preference: "lowest-price",
+      coverTypeFilter: "any",
+      hasDeckRailSystem: true,
     });
     expect(result.generation?.id).toBe("tacoma-2g");
   });
@@ -25,7 +35,8 @@ describe("recommendCovers - generation matching by year", () => {
       truckId: "toyota-tacoma",
       year: 2020,
       bedLengthId: "tacoma-3g-5ft",
-      preference: "lowest-price",
+      coverTypeFilter: "any",
+      hasDeckRailSystem: true,
     });
     expect(result.generation?.id).toBe("tacoma-3g");
   });
@@ -36,7 +47,8 @@ describe("recommendCovers - generation matching by year", () => {
         truckId: "toyota-tacoma",
         year,
         bedLengthId: "tacoma-4g-5ft",
-        preference: "lowest-price",
+        coverTypeFilter: "any",
+        hasDeckRailSystem: true,
       });
       expect(result.generation?.id).toBe("tacoma-4g");
     }
@@ -47,36 +59,40 @@ describe("recommendCovers - generation matching by year", () => {
       const result = recommendCovers({
         truckId: "toyota-tacoma",
         year,
-        preference: "lowest-price",
+        coverTypeFilter: "any",
       });
       expect(result.generation).toBeNull();
       expect(result.recommendations).toEqual([]);
       expect(result.note).toMatch(/don't have verified/i);
+      expect(result.hiddenByUnconfirmedDeckRail).toBe(false);
     }
   });
 });
 
 describe("recommendCovers - bed length eligibility (exact verified combination inclusion)", () => {
-  it("2020 / 5ft returns only 5ft-fitment products, never a 6ft-only product", () => {
+  it("2020 / 5ft, Deck Rail confirmed, returns only 5ft-fitment products, never a 6ft-only product", () => {
     const result = recommendCovers({
       truckId: "toyota-tacoma",
       year: 2020,
       bedLengthId: "tacoma-3g-5ft",
-      preference: "lowest-price",
+      coverTypeFilter: "any",
+      hasDeckRailSystem: true,
     });
     const ids = result.recommendations.map((r) => r.product.id);
     expect(ids).toContain("worksport-al3");
     expect(ids).toContain("bak-bakflip-mx4-3g");
     expect(ids).toContain("worksport-al4"); // AL4 has both a 5ft and a 6ft fitment row — correctly appears here too
     expect(ids).not.toContain("bak-revolver-x4s-3g"); // 6ft-only, must be excluded
+    expect(result.hiddenByUnconfirmedDeckRail).toBe(false);
   });
 
-  it("2020 / 6ft returns only 6ft-fitment products, never a 5ft-only product", () => {
+  it("2020 / 6ft, Deck Rail confirmed, returns only 6ft-fitment products, never a 5ft-only product", () => {
     const result = recommendCovers({
       truckId: "toyota-tacoma",
       year: 2020,
       bedLengthId: "tacoma-3g-6ft",
-      preference: "lowest-price",
+      coverTypeFilter: "any",
+      hasDeckRailSystem: true,
     });
     const ids = result.recommendations.map((r) => r.product.id);
     expect(ids).toContain("worksport-al4");
@@ -88,7 +104,8 @@ describe("recommendCovers - bed length eligibility (exact verified combination i
     const result = recommendCovers({
       truckId: "toyota-tacoma",
       year: 2020,
-      preference: "lowest-price",
+      coverTypeFilter: "any",
+      hasDeckRailSystem: true,
     });
     expect(result.recommendations).toEqual([]);
     expect(result.note).toMatch(/select your bed length/i);
@@ -96,12 +113,13 @@ describe("recommendCovers - bed length eligibility (exact verified combination i
 });
 
 describe("recommendCovers - year-narrowed fitment (Worksport AL3, 4th Gen)", () => {
-  it("2024 / 6ft includes the AL3 (its stated 2024-2025 window)", () => {
+  it("2024 / 6ft, Deck Rail confirmed, includes the AL3 (its stated 2024-2025 window)", () => {
     const result = recommendCovers({
       truckId: "toyota-tacoma",
       year: 2024,
       bedLengthId: "tacoma-4g-6ft",
-      preference: "lowest-price",
+      coverTypeFilter: "any",
+      hasDeckRailSystem: true,
     });
     expect(result.recommendations.map((r) => r.product.id)).toEqual(["worksport-al3"]);
   });
@@ -111,20 +129,25 @@ describe("recommendCovers - year-narrowed fitment (Worksport AL3, 4th Gen)", () 
       truckId: "toyota-tacoma",
       year: 2025,
       bedLengthId: "tacoma-4g-6ft",
-      preference: "lowest-price",
+      coverTypeFilter: "any",
+      hasDeckRailSystem: true,
     });
     expect(result.recommendations.map((r) => r.product.id)).toEqual(["worksport-al3"]);
   });
 
-  it("2026 / 6ft returns an honest empty result — no verified source covers a 6ft bed for the 2026 model year", () => {
+  it("2026 / 6ft returns an honest empty result — no verified source covers a 6ft bed for the 2026 model year, regardless of Deck Rail answer", () => {
     const result = recommendCovers({
       truckId: "toyota-tacoma",
       year: 2026,
       bedLengthId: "tacoma-4g-6ft",
-      preference: "lowest-price",
+      coverTypeFilter: "any",
+      hasDeckRailSystem: true,
     });
     expect(result.recommendations).toEqual([]);
     expect(result.note).toMatch(/no verified tonneau cover/i);
+    // Not a Deck Rail issue — the fitment itself doesn't cover 2026 at all,
+    // so this must not be conflated with the Deck Rail-hidden case.
+    expect(result.hiddenByUnconfirmedDeckRail).toBe(false);
   });
 
   it("2024 / 5ft includes the AL4, never the AL3 (bed length mismatch)", () => {
@@ -132,35 +155,74 @@ describe("recommendCovers - year-narrowed fitment (Worksport AL3, 4th Gen)", () 
       truckId: "toyota-tacoma",
       year: 2024,
       bedLengthId: "tacoma-4g-5ft",
-      preference: "lowest-price",
+      coverTypeFilter: "any",
+      hasDeckRailSystem: true,
     });
     const ids = result.recommendations.map((r) => r.product.id);
     expect(ids).toEqual(["worksport-al4"]);
   });
 });
 
-describe("recommendCovers - Deck Rail System gating", () => {
-  const base = {
+describe("recommendCovers - Deck Rail System gating (3-state: true / false / unconfirmed)", () => {
+  // 2020 / 5ft has one Deck-Rail-required product (worksport-al3, plus
+  // worksport-al4) and one that isn't (bak-bakflip-mx4-3g) — a mixed group,
+  // which is what makes the "hidden" (not "all-or-nothing") behavior
+  // observable.
+  const mixedGroup = {
     truckId: "toyota-tacoma",
     year: 2020,
     bedLengthId: "tacoma-3g-5ft" as const,
-    preference: "lowest-price" as const,
+    coverTypeFilter: "any" as const,
   };
 
-  it("hasDeckRailSystem: false excludes every product, since every current product requires it", () => {
-    const result = recommendCovers({ ...base, hasDeckRailSystem: false });
-    expect(result.recommendations).toEqual([]);
-    expect(result.note).toMatch(/no verified tonneau cover/i);
+  it("true: every otherwise-eligible product is included, nothing hidden", () => {
+    const result = recommendCovers({ ...mixedGroup, hasDeckRailSystem: true });
+    const ids = result.recommendations.map((r) => r.product.id);
+    expect(ids).toContain("worksport-al3");
+    expect(ids).toContain("worksport-al4");
+    expect(ids).toContain("bak-bakflip-mx4-3g");
+    expect(result.hiddenByUnconfirmedDeckRail).toBe(false);
+    expect(result.note).toBeNull();
   });
 
-  it("hasDeckRailSystem: true includes the otherwise-eligible products", () => {
-    const result = recommendCovers({ ...base, hasDeckRailSystem: true });
-    expect(result.recommendations.length).toBeGreaterThan(0);
+  it("false: Deck-Rail-required products are excluded, but the non-Deck-Rail BAK product still shows, with an explanatory note", () => {
+    const result = recommendCovers({ ...mixedGroup, hasDeckRailSystem: false });
+    const ids = result.recommendations.map((r) => r.product.id);
+    expect(ids).toEqual(["bak-bakflip-mx4-3g"]);
+    expect(result.hiddenByUnconfirmedDeckRail).toBe(true);
+    expect(result.note).toMatch(/hidden/i);
+    expect(result.note).not.toMatch(/unknown/i); // must not read as "unknown" when the answer was a confirmed No
   });
 
-  it("omitting hasDeckRailSystem never excludes — unknown is not treated as false", () => {
-    const result = recommendCovers(base);
-    expect(result.recommendations.length).toBeGreaterThan(0);
+  it("undefined (unconfirmed): same exclusion as false, but the note reads as unknown, not as a confirmed No", () => {
+    const result = recommendCovers(mixedGroup);
+    const ids = result.recommendations.map((r) => r.product.id);
+    expect(ids).toEqual(["bak-bakflip-mx4-3g"]);
+    expect(result.hiddenByUnconfirmedDeckRail).toBe(true);
+    expect(result.note).toMatch(/unknown/i);
+  });
+
+  it("false vs. undefined produce different note text — the two states are never collapsed into one", () => {
+    const falseResult = recommendCovers({ ...mixedGroup, hasDeckRailSystem: false });
+    const unknownResult = recommendCovers(mixedGroup);
+    expect(falseResult.note).not.toBe(unknownResult.note);
+  });
+
+  it("a config with ONLY a Deck-Rail-required product (4th Gen 6ft, Worksport AL3 only) goes fully empty on false or undefined", () => {
+    const onlyDeckRailProduct = {
+      truckId: "toyota-tacoma",
+      year: 2024,
+      bedLengthId: "tacoma-4g-6ft" as const,
+      coverTypeFilter: "any" as const,
+    };
+    const falseResult = recommendCovers({ ...onlyDeckRailProduct, hasDeckRailSystem: false });
+    const unknownResult = recommendCovers(onlyDeckRailProduct);
+    expect(falseResult.recommendations).toEqual([]);
+    expect(falseResult.hiddenByUnconfirmedDeckRail).toBe(true);
+    expect(falseResult.note).toMatch(/doesn't have it/i);
+    expect(unknownResult.recommendations).toEqual([]);
+    expect(unknownResult.hiddenByUnconfirmedDeckRail).toBe(true);
+    expect(unknownResult.note).toMatch(/unknown/i);
   });
 });
 
@@ -170,40 +232,58 @@ describe("recommendCovers - cross-generation isolation", () => {
       truckId: "toyota-tacoma",
       year: 2010,
       bedLengthId: "tacoma-2g-5ft",
-      preference: "lowest-price",
+      coverTypeFilter: "any",
+      hasDeckRailSystem: true,
     });
     const gen3 = recommendCovers({
       truckId: "toyota-tacoma",
       year: 2020,
       bedLengthId: "tacoma-3g-5ft",
-      preference: "lowest-price",
+      coverTypeFilter: "any",
+      hasDeckRailSystem: true,
     });
     const gen2Ids = new Set(gen2.recommendations.map((r) => r.product.id));
     const gen3Ids = new Set(gen3.recommendations.map((r) => r.product.id));
+    expect(gen2Ids.size).toBeGreaterThan(0);
+    expect(gen3Ids.size).toBeGreaterThan(0);
     for (const id of gen2Ids) {
       expect(gen3Ids.has(id)).toBe(false);
     }
   });
 });
 
-describe("recommendCovers - preferences", () => {
-  it("lowest-price sorts ascending by reference price", () => {
+describe("recommendCovers - cover type filter and price sort", () => {
+  it("\"any\" applies no cover-type filter — multiple distinct cover types can appear together", () => {
     const result = recommendCovers({
       truckId: "toyota-tacoma",
       year: 2020,
       bedLengthId: "tacoma-3g-5ft",
-      preference: "lowest-price",
+      coverTypeFilter: "any",
+      hasDeckRailSystem: true,
+    });
+    const coverTypes = new Set(result.recommendations.map((r) => r.product.coverType));
+    expect(coverTypes.size).toBeGreaterThan(1);
+  });
+
+  it("results are always sorted by reference price ascending, regardless of cover type filter", () => {
+    const result = recommendCovers({
+      truckId: "toyota-tacoma",
+      year: 2020,
+      bedLengthId: "tacoma-3g-5ft",
+      coverTypeFilter: "any",
+      hasDeckRailSystem: true,
     });
     const prices = result.recommendations.map((r) => r.product.referencePrice.min);
     expect(prices).toEqual([...prices].sort((a, b) => a - b));
   });
 
-  it("hard-folding only returns hard-folding products", () => {
+  it("\"hard-folding\" filters to only hard-folding products", () => {
     const result = recommendCovers({
       truckId: "toyota-tacoma",
       year: 2020,
       bedLengthId: "tacoma-3g-5ft",
-      preference: "hard-folding",
+      coverTypeFilter: "hard-folding",
+      hasDeckRailSystem: true,
     });
     expect(result.recommendations.length).toBeGreaterThan(0);
     for (const r of result.recommendations) {
@@ -211,12 +291,13 @@ describe("recommendCovers - preferences", () => {
     }
   });
 
-  it("hard-folding returns an honest empty result for a bed length with no hard-folding product", () => {
+  it("\"hard-folding\" returns an honest empty result for a bed length with no hard-folding product", () => {
     const result = recommendCovers({
       truckId: "toyota-tacoma",
       year: 2020,
       bedLengthId: "tacoma-3g-6ft",
-      preference: "hard-folding",
+      coverTypeFilter: "hard-folding",
+      hasDeckRailSystem: true,
     });
     expect(result.recommendations).toEqual([]);
   });
@@ -226,7 +307,8 @@ describe("recommendCovers - preferences", () => {
       truckId: "toyota-tacoma",
       year: 2020,
       bedLengthId: "tacoma-3g-5ft",
-      preference: "lowest-price",
+      coverTypeFilter: "any",
+      hasDeckRailSystem: true,
     });
     for (const r of result.recommendations) {
       expect(r.reasons.length).toBeGreaterThan(0);
@@ -241,7 +323,7 @@ describe("recommendCovers - unsupported truck", () => {
       truckId: "ford-ranger",
       year: 2020,
       bedLengthId: "tacoma-3g-5ft",
-      preference: "lowest-price",
+      coverTypeFilter: "any",
     });
     expect(result.generation).toBeNull();
     expect(result.recommendations).toEqual([]);
@@ -310,13 +392,18 @@ describe("isEligibleCandidate - synthetic fixtures (edge cases not present in to
     expect(isEligibleCandidate(candidate(), 2020, "test-gen-5ft", true)).toBe(true);
   });
 
-  it("Deck Rail required + hasDeckRailSystem undefined → included (unknown is never treated as false)", () => {
-    expect(isEligibleCandidate(candidate(), 2020, "test-gen-5ft", undefined)).toBe(true);
+  it("Deck Rail required + hasDeckRailSystem undefined → excluded (unconfirmed is treated the same as false, never as \"probably fine\")", () => {
+    expect(isEligibleCandidate(candidate(), 2020, "test-gen-5ft", undefined)).toBe(false);
   });
 
   it("Deck Rail NOT required + hasDeckRailSystem false → still included (the gate only ever applies when the product needs it)", () => {
     const noRail = candidate({ product: { requiresDeckRailSystem: false } });
     expect(isEligibleCandidate(noRail, 2020, "test-gen-5ft", false)).toBe(true);
+  });
+
+  it("Deck Rail NOT required + hasDeckRailSystem undefined → still included (the gate only ever applies when the product needs it)", () => {
+    const noRail = candidate({ product: { requiresDeckRailSystem: false } });
+    expect(isEligibleCandidate(noRail, 2020, "test-gen-5ft", undefined)).toBe(true);
   });
 });
 
@@ -326,7 +413,8 @@ describe("buildReasons", () => {
       truckId: "toyota-tacoma",
       year: 2020,
       bedLengthId: "tacoma-3g-5ft",
-      preference: "lowest-price",
+      coverTypeFilter: "any",
+      hasDeckRailSystem: true,
     });
     expect(result.recommendations[0]?.reasons.length).toBeGreaterThan(0);
   });
